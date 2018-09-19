@@ -1499,8 +1499,6 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         self.viewer_global_time_guess.setTitle('Total Photoelectron decay')
         self.viewer_global_time_guess.setLabel('left', "intensity", units='arb.u.')
         self.viewer_global_time_guess.setLabel('bottom', "time", units='ps')
-        self.viewer_global_pe_guess.setLabel('left', "intensity", units='arb.u.')
-        self.viewer_global_pe_guess.setLabel('bottom', "energy", units='eV')
         self.viewer_DAS.setLabel('left', "intensity", units='arb.u.')
         self.viewer_DAS.setLabel('bottom', "energy", units='eV')
         self.filterMenu2 = QtGui.QMenu("Normalize")
@@ -1526,7 +1524,6 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         self.comboBox_global_TRPES_which.setCurrentIndex(0)
         self.comboBox_global_TRPES_which.blockSignals(False)
         self.plot_TRPES(self.viewer_global_orig_TRPES,self.global_TRPES,self.global_time,self.global_eV)
-        self.viewer_global_pe_gauss_update()
         self.update_global_fit_parameters()
         self.viewer_global_time_guess_update()
         self.checkBox_global_subtract_background.setChecked(False)
@@ -1579,7 +1576,6 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             self.comboBox_global_TRPES_which.setCurrentIndex(0)
             self.comboBox_global_TRPES_which.blockSignals(False)
             self.plot_TRPES(self.viewer_global_orig_TRPES,self.global_TRPES,self.global_time,self.global_eV)
-            self.viewer_global_pe_gauss_update()
             self.update_global_fit_parameters()
             self.viewer_global_time_guess_update()
             self.checkBox_global_subtract_background.setChecked(False)
@@ -1597,7 +1593,6 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             self.comboBox_global_TRPES_which.setCurrentIndex(0)
             self.comboBox_global_TRPES_which.blockSignals(False)
             self.plot_TRPES(self.viewer_global_orig_TRPES,self.global_TRPES,self.global_time,self.global_eV)
-            self.viewer_global_pe_gauss_update()
             self.update_global_fit_parameters()
             self.viewer_global_time_guess_update()
             self.checkBox_global_subtract_background.setChecked(False)
@@ -1702,209 +1697,11 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             print('these are the plotted limits',np.min(self.global_eV),np.max(self.global_eV))
             self.plot_TRPES(self.viewer_global_orig_TRPES,self.global_TRPES,self.global_time,self.global_eV)
             self.viewer_global_time_guess_update()
-            self.viewer_global_pe_gauss_update()
     
     #----------------------------------
     #all functions regrouped from the inital guess tab
     #----------------------------------
-    def viewer_global_pe_gauss_update(self):
-        '''
-        load the current DAS and fit it intensity-wise best to the displayed spectra (just for displaying purposes) 
-        '''        
-        if type(self.global_TRPES)!=type(None):
-            #let's first display the summed pe
-            self.viewer_global_pe_guess.clear()
-            #delete the old legend
-            try:
-                self.viewer_global_pe_legend.scene().removeItem(self.viewer_global_pe_legend)
-            except Exception as e:
-               pass
-            self.viewer_global_pe_legend=self.viewer_global_pe_guess.addLegend(size=(1.,0.1),offset=(-0.4,0.4))
-            v_min=self.find_nearest_index(self.global_time,self.doubleSpinBox_global_guess_comp_min.value())
-            v_max=self.find_nearest_index(self.global_time,self.doubleSpinBox_global_guess_comp_max.value())
-            if v_min==v_max:
-                v_min-=1
-            if v_min+1==v_max:
-                y=self.global_TRPES[v_min:v_max,:].transpose()
-                y=np.reshape(y,self.global_eV.shape)
-                pe_to_be_fitted=y
-                self.viewer_global_pe_guess.plot(self.global_eV,y, symbolPen='w',name='exp')
-                eV_max=max(y)
-            else:
-                if v_min>v_max:
-                    pe_to_be_fitted_2D=self.global_TRPES[v_max:v_min,:]
-                else:
-                    pe_to_be_fitted_2D=self.global_TRPES[v_min:v_max,:]
 
-                pe_to_be_fitted=np.sum(pe_to_be_fitted_2D,axis=0)/np.max(pe_to_be_fitted_2D)
-                self.viewer_global_pe_guess.plot(self.global_eV,pe_to_be_fitted, symbolPen='w',name='exp')
-                eV_max=np.max(pe_to_be_fitted)
-            #make the summed_Pe
-            summed_pe=np.zeros(self.global_eV.shape)
-            for gauss in self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()]:
-                summed_pe+=gauss.calculate_gauss(self.global_eV)
-            normalize_factor=max(summed_pe)
-            summed_pe=np.nan_to_num(eV_max*summed_pe/normalize_factor)
-            
-            #plot the fit functions stuff
-            for i, gauss in enumerate(self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()]):
-                if i==(self.comboBox_global_PE_current.currentIndex()):
-                    self.viewer_global_pe_guess.plot(self.global_eV,eV_max*0.8*gauss.calculate_gauss(self.global_eV),
-                                    pen=pg.mkPen(self.colors[i],width=3),name=str(i))
-                else:
-                    self.viewer_global_pe_guess.plot(self.global_eV,eV_max*0.8*gauss.calculate_gauss(self.global_eV),
-                                    pen=self.colors[i],width=1,name=str(i))
-            #plot the summed
-            self.viewer_global_pe_guess.plot(self.global_eV,summed_pe,pen=(0,0,0))
-        
-    
-    @pyqtSlot('int')
-    def on_comboBox_global_PE_guess_DAS_which_currentIndexChanged(self,value):
-        
-        to_block=[self.spinBox_global_PE_number,
-                  self.comboBox_global_PE_current]
-        for b in to_block:
-            b.blockSignals(True)
-        #load the lowest ranking gaussian and display only that
-        number_gaussians=len(self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()])
-        self.spinBox_global_PE_number.setValue(number_gaussians)
-        self.comboBox_global_PE_current.clear()
-        for i in range(number_gaussians):
-            self.comboBox_global_PE_current.addItem(str(i+1))
-        self.global_load_current_gauss()
-        self.viewer_global_pe_gauss_update()
-        for b in to_block:
-            b.blockSignals(False)
-            
-    def global_load_current_gauss(self):
-        to_block=[self.spinBox_global_PE_number,
-                  self.comboBox_global_PE_current,
-                  self.doubleSpinBox_global_PE_center,
-                  self.doubleSpinBox_global_PE_width,
-                  self.doubleSpinBox_global_pe_assymetry,
-                  self.doubleSpinBox_global_pe_rel_intensity,
-                  self.radioButton_center_fixed,
-                  self.radioButton_width_fixed,
-                  self.radioButton_assym_fixed,self.radioButton_rel_int_fixed]
-        for b in to_block:
-            b.blockSignals(True)
-        index=self.comboBox_global_PE_current.currentIndex()
-        self.doubleSpinBox_global_PE_center.setValue(self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()][index].mu)
-        self.doubleSpinBox_global_PE_width.setValue(self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()][index].fwhm)
-        self.doubleSpinBox_global_pe_assymetry.setValue(self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()][index].alpha)
-        self.doubleSpinBox_global_pe_rel_intensity.setValue(self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()][index].intensity)
-        self.radioButton_center_fixed.setChecked(self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()][index].mu_fitted)
-        self.radioButton_width_fixed.setChecked(self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()][index].fwhm_fitted)
-        self.radioButton_assym_fixed.setChecked(self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()][index].alpha_fitted)
-        self.radioButton_rel_int_fixed.setChecked(self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()][index].intensity_fitted)
-        for b in to_block:
-            b.blockSignals(False)
-        
-    
-    @pyqtSlot('double')
-    def on_doubleSpinBox_global_guess_comp_min_valueChanged(self,value):
-        self.doubleSpinBox_global_guess_comp_min.blockSignals(True)
-        self.doubleSpinBox_global_guess_comp_max.blockSignals(True)
-        if value>self.doubleSpinBox_global_guess_comp_max.value():
-            self.doubleSpinBox_global_guess_comp_min.setValue(self.global_time[self.find_nearest_index(self.global_time,
-                                                                                                       self.doubleSpinBox_global_guess_comp_max.value())-1])
-        self.doubleSpinBox_global_guess_comp_min.blockSignals(False)
-        self.doubleSpinBox_global_guess_comp_max.blockSignals(False)
-        self.viewer_global_pe_gauss_update()
-        
-
-    @pyqtSlot('double')
-    def on_doubleSpinBox_global_guess_comp_max_valueChanged(self,value):        
-        self.doubleSpinBox_global_guess_comp_min.blockSignals(True)
-        self.doubleSpinBox_global_guess_comp_max.blockSignals(True)
-        if value<self.doubleSpinBox_global_guess_comp_min.value():
-            self.doubleSpinBox_global_guess_comp_max.setValue(self.global_time[self.find_nearest_index(self.global_time,
-                                                                                                       self.doubleSpinBox_global_guess_comp_min.value())+1])
-        self.doubleSpinBox_global_guess_comp_min.blockSignals(False)
-        self.doubleSpinBox_global_guess_comp_max.blockSignals(False)
-        self.viewer_global_pe_gauss_update()
-
-    def update_global_gauss(self):
-        '''
-        take all current values
-        '''
-        index=self.comboBox_global_PE_current.currentIndex()
-        self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()][index].mu=self.doubleSpinBox_global_PE_center.value()
-        self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()][index].fwhm=self.doubleSpinBox_global_PE_width.value()
-        self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()][index].alpha=self.doubleSpinBox_global_pe_assymetry.value()
-        self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()][index].intensity=self.doubleSpinBox_global_pe_rel_intensity.value()
-        self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()][index].mu_fitted=self.radioButton_center_fixed.isChecked()
-        self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()][index].fwhm_fitted=self.radioButton_width_fixed.isChecked()
-        self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()][index].alpha_fitted=self.radioButton_assym_fixed.isChecked()
-        self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()][index].intensity_fitted=self.radioButton_rel_int_fixed.isChecked()        
-        self.viewer_global_pe_gauss_update()
-        
-    @pyqtSlot('double')
-    def on_doubleSpinBox_global_PE_center_valueChanged(self,value):
-        self.update_global_gauss()
-
-    @pyqtSlot('double')
-    def on_doubleSpinBox_global_PE_width_valueChanged(self,value):
-        self.update_global_gauss()
-    @pyqtSlot('double')
-    def on_doubleSpinBox_global_pe_assymetry_valueChanged(self,value):
-        self.update_global_gauss()
-    @pyqtSlot('double')
-    def on_doubleSpinBox_global_pe_rel_intensity_valueChanged(self,value):
-        self.update_global_gauss()
-    @pyqtSlot('bool')
-    def on_radioButton_center_fixed_toggled(self,value):
-        self.update_global_gauss()
-    @pyqtSlot('bool')
-    def on_radioButton_width_fixed_toggled(self,value):
-        self.update_global_gauss()
-    @pyqtSlot('bool')
-    def on_radioButton_assym_fixed_toggled(self,value):
-        self.update_global_gauss()
-    @pyqtSlot('bool')
-    def on_radioButton_rel_int_fixed_toggled(self,value):
-        self.update_global_gauss()
-
-    @pyqtSlot('int')
-    def on_spinBox_global_PE_number_valueChanged(self,value):
-        '''
-        add or delete stuff as necessary
-        '''
-        #add a new one to the self.pe_gauss or delete it
-        self.comboBox_global_PE_current.blockSignals(True)
-        if value>len(self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()]):
-            self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()].append(skewed_gauss(0.,0.2,0.,1.))            
-            #and update self.comboBox_PE_current
-            self.comboBox_global_PE_current.addItem(str(value))
-        else:
-            del self.global_pe_gauss[self.comboBox_global_PE_guess_DAS_which.currentIndex()][-1]
-            #remove from combobox
-            self.comboBox_global_PE_current.removeItem(self.comboBox_global_PE_current.count()-1)
-        #put combobox and last index
-        self.comboBox_global_PE_current.setCurrentIndex(self.comboBox_global_PE_current.count()-1)
-        self.comboBox_global_PE_current.blockSignals(False)
-        self.update_global_gauss()
-
-    @pyqtSlot('int')
-    def on_comboBox_global_PE_current_currentIndexChanged(self,value):
-        self.global_load_current_gauss()
-        self.update_global_gauss()
-
-    def update_global_fit_parameters(self):
-        """"
-        getting the currently displayed fit parameters and updating the self.simulated_fit object
-        """
-        self.global_fit.tau1=self.doubleSpinBox_global_time_tau1_guess.value()
-        self.global_fit.tau2=self.doubleSpinBox_global_time_tau2_guess.value()
-        self.global_fit.tau3=self.doubleSpinBox_global_time_tau3_guess.value()
-        self.global_fit.sigma_1=[1.]
-        self.global_fit.sigma_2=[1.]
-        self.global_fit.sigma_3=[1.]
-        self.global_fit.fwhm=[self.doubleSpinBox_guess_time_irf_guess.value()]
-        self.global_fit.moy=[0.]
-        self.global_fit.time_offset=[self.doubleSpinBox_global_time_pos_irf_guess.value()]
-        self.global_fit.sigma_offset=[0.5]
-    
     @pyqtSlot('bool')
     def on_checkBox_global_time_display_all_toggled(self,value):
         self.viewer_global_time_guess_update()
@@ -1919,7 +1716,7 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         '''
         plot the graph of viewer_global_time_guess new with the selected fitting model, fit the intensities maybe at least rudimentairy?
         '''
-        if type(self.global_TRPES)!=type(None):
+        if type(self.global_TRPES)!=type(None):            
             #let's first display the summed temperal evolution
             self.viewer_global_time_guess.clear()
             self.viewer_global_time_legend=self.viewer_global_time_guess.addLegend(size=(1.,0.1),offset=(-0.4,0.4))
@@ -1939,48 +1736,97 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             if max_for_norm==0.:
                 max_for_norm=1
             self.viewer_global_time_guess.plot(self.global_time,temp_global/max_for_norm, symbolPen='w')
-            #display a first fit
-            t=self.global_time+self.doubleSpinBox_global_time_pos_irf_guess.value()
-            all_curves_taus=[self.global_fit.mono_exp_decay(t,0),
-                    self.global_fit.bi_exp_decay_population(t,0),
-                    self.global_fit.tri_exp_decay_population(t,0)]
-            names=['mono-exp','bi-exp','tri-exp']
-            all_curves_final_offset=[self.global_fit.mono_exp_decay_final_state_pop(t,0),
-                                 self.global_fit.bi_exp_decay_final_state_pop(t,0),
-                                 self.global_fit.tri_exp_decay_final_state_pop(t,0)]
-            all_curves_offset=self.global_fit.offset(t,0)
-            time_curves=all_curves_taus[:self.comboBox_global_pick_model.currentIndex()+1]
-            names=names[:self.comboBox_global_pick_model.currentIndex()+1]
-            if self.radioButton_time_final_offset_2.isChecked()==True:
-                time_curves.append(all_curves_final_offset[self.comboBox_global_pick_model.currentIndex()])
-                names.append('offset_final')
-            elif self.radioButton_time_offset_2.isChecked()==True:
-                time_curves.append(all_curves_offset)
-                names.append('offset')
-            if self.comboBox_global_pick_model.currentIndex()==3:
-                time_curves=[self.global_fit.fct_auto_corr(t,0)]
-                names=['autocorr']
-            #idea: implement automatic correct fit of intensities
-            self.gobal_guess_time_curves=time_curves
-            summed_decay=np.zeros(self.global_time.shape[0])
-            for i,curve in enumerate(time_curves):
-                if math.isnan(curve[0])!=True:
-                    summed_decay+=curve
-                else:
-                    time_curves[i]=np.zeros(curve.shape)
-            divider=max(summed_decay)
-            if divider==0:
-                divider=1.
-            for i,curve in enumerate(time_curves):
-                self.viewer_global_time_guess.plot(self.global_time,curve/divider*len(time_curves),
-                                pen=pg.mkPen(self.colors[i],width=2),name=names[i]) 
-            self.viewer_global_time_guess.plot(self.global_time,summed_decay/divider,
-                                pen=pg.mkPen((0,0,0),width=2))
+            if self.checkBox_global_parallel.isChecked()==False:
+                #display a first fit
+                t=self.global_time+self.doubleSpinBox_global_time_pos_irf_guess.value()
+                all_curves_taus=[self.global_fit.mono_exp_decay(t,0),
+                        self.global_fit.bi_exp_decay_population(t,0),
+                        self.global_fit.tri_exp_decay_population(t,0)]
+                names=['mono-exp','bi-exp','tri-exp']
+                all_curves_final_offset=[self.global_fit.mono_exp_decay_final_state_pop(t,0),
+                                     self.global_fit.bi_exp_decay_final_state_pop(t,0),
+                                     self.global_fit.tri_exp_decay_final_state_pop(t,0)]
+                all_curves_offset=self.global_fit.offset(t,0)
+                time_curves=all_curves_taus[:self.comboBox_global_pick_model.currentIndex()+1]
+                names=names[:self.comboBox_global_pick_model.currentIndex()+1]
+                if self.radioButton_time_final_offset_2.isChecked()==True:
+                    time_curves.append(all_curves_final_offset[self.comboBox_global_pick_model.currentIndex()])
+                    names.append('offset_final')
+                elif self.radioButton_time_offset_2.isChecked()==True:
+                    time_curves.append(all_curves_offset)
+                    names.append('offset')
+                if self.comboBox_global_pick_model.currentIndex()==3:
+                    time_curves=[self.global_fit.fct_auto_corr(t,0)]
+                    names=['autocorr']
+                #idea: implement automatic correct fit of intensities
+                self.gobal_guess_time_curves=time_curves
+                summed_decay=np.zeros(self.global_time.shape[0])
+                for i,curve in enumerate(time_curves):
+                    if math.isnan(curve[0])!=True:
+                        summed_decay+=curve
+                    else:
+                        time_curves[i]=np.zeros(curve.shape)
+                divider=max(summed_decay)
+                if divider==0:
+                    divider=1.
+                for i,curve in enumerate(time_curves):
+                    self.viewer_global_time_guess.plot(self.global_time,curve/divider,
+                                    pen=pg.mkPen(self.colors[i],width=2),name=names[i]) 
+                self.viewer_global_time_guess.plot(self.global_time,summed_decay/divider,
+                                    pen=pg.mkPen((0,0,0),width=2))
+            else:
+                print('assuming parallel model!')
+                t=self.global_time+self.doubleSpinBox_global_time_pos_irf_guess.value()
+                all_curves_taus=[self.global_fit.mono_exp_parallel(t,0),
+                        self.global_fit.bi_exp_parallel_pop(t,0),
+                        self.global_fit.tri_exp_parallel_pop(t,0)]
+                names=['mono-exp','bi-exp','tri-exp']
+                time_curves=all_curves_taus[:self.comboBox_global_pick_model.currentIndex()+1]
+                names=names[:self.comboBox_global_pick_model.currentIndex()+1]
+                
+                all_curves_offset=self.global_fit.offset(t,0)
+                if self.radioButton_no_offset_2.isChecked()==False:
+                    time_curves.append(all_curves_offset)
+                    names.append('offset')
+                if self.comboBox_global_pick_model.currentIndex()==3:
+                    time_curves=[self.global_fit.fct_auto_corr(t,0)]
+                    names=['autocorr']
+                self.gobal_guess_time_curves=time_curves
+                summed_decay=np.zeros(self.global_time.shape[0])
+                for i,curve in enumerate(time_curves):
+                    if math.isnan(curve[0])!=True:
+                        summed_decay+=curve
+                    else:
+                        time_curves[i]=np.zeros(curve.shape)
+                divider=max(summed_decay)
+                if divider==0:
+                    divider=1.
+                for i,curve in enumerate(time_curves):
+                    self.viewer_global_time_guess.plot(self.global_time,curve/divider,
+                                    pen=pg.mkPen(self.colors[i],width=2),name=names[i]) 
+                self.viewer_global_time_guess.plot(self.global_time,summed_decay/divider,
+                                    pen=pg.mkPen((0,0,0),width=2))
+                
             
-
+    def update_global_fit_parameters(self):
+        """"
+        getting the currently displayed fit parameters and updating the self.simulated_fit object
+        """
+        self.global_fit.tau1=self.doubleSpinBox_global_time_tau1_guess.value()
+        self.global_fit.tau2=self.doubleSpinBox_global_time_tau2_guess.value()
+        self.global_fit.tau3=self.doubleSpinBox_global_time_tau3_guess.value()
+        self.global_fit.sigma_1=[1.]
+        self.global_fit.sigma_2=[1.]
+        self.global_fit.sigma_3=[1.]
+        self.global_fit.fwhm=[self.doubleSpinBox_guess_time_irf_guess.value()]
+        self.global_fit.moy=[0.]
+        self.global_fit.time_offset=[self.doubleSpinBox_global_time_pos_irf_guess.value()]
+        self.global_fit.sigma_offset=[0.5]
     
     @pyqtSlot('int')
     def on_comboBox_global_pick_model_currentIndexChanged(self,value):
+        if value==3 and self.radioButton_no_offset_2.isChecked()==False:
+            self.radioButton_no_offset_2.setChecked(True)
         self.update_global_fit_parameters()
         self.viewer_global_time_guess_update()
 
@@ -2011,185 +1857,19 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         
     @pyqtSlot('bool')
     def on_radioButton_no_offset_2_toggled(self,value):
+        if self.comboBox_global_pick_model.currentIndex()==3:
+            self.radioButton_no_offset_2.setChecked(True)
         self.update_global_fit_parameters()
         self.viewer_global_time_guess_update()
         
     @pyqtSlot('bool')
     def on_radioButton_time_final_offset_2_toggled(self,value):
+        if self.comboBox_global_pick_model.currentIndex()==3:
+            self.radioButton_no_offset_2.setChecked(True)
         self.update_global_fit_parameters()
         self.viewer_global_time_guess_update()
 
-    def construct_2D_fit_object(self):
-        #make a fit_2D object and fill it with the current displayed values
-        test_fit=fits_2D() 
-        #make the values_to_be fitted and values_to_be_fitted_what and determine the fit function
-        index_model=self.comboBox_global_pick_model.currentIndex()
-        values_to_be_fitted=[]
-        values_to_be_fitted_what=[]
-        fixed_values=[]
-        fixed_values_what=[]
-        #adding offset and irf
-        if self.radioButton_IRF_fixed.isChecked()==False:
-            values_to_be_fitted.append(self.doubleSpinBox_guess_time_irf_guess.value())
-            values_to_be_fitted_what.append('fwhm')
-        else:
-            fixed_values.append(self.doubleSpinBox_guess_time_irf_guess.value())
-            fixed_values_what.append('fwhm')
-        if self.radioButton_pos_fixed.isChecked()==False:
-            values_to_be_fitted.append(self.doubleSpinBox_global_time_pos_irf_guess.value())
-            values_to_be_fitted_what.append('time_offset')
-        else:
-            fixed_values.append(self.doubleSpinBox_global_time_pos_irf_guess.value())
-            fixed_values_what.append('time_offset')
-        if index_model>=0:
-            #add all stuff for tau1
-            if self.radioButton_tau1_fixed.isChecked()==False:
-                values_to_be_fitted.append(self.doubleSpinBox_global_time_tau1_guess.value())
-                values_to_be_fitted_what.append('tau1')
-            else:
-                fixed_values.append(self.doubleSpinBox_global_time_tau1_guess.value())
-                fixed_values_what.append('tau1')
-            test_fit.gauss1_n=len(self.global_pe_gauss[0])
-            for i,g in enumerate(self.global_pe_gauss[0]):
-                if g.mu_fitted==False:
-                    values_to_be_fitted_what.append('gauss1'+' center;'+str(i))
-                    values_to_be_fitted.append(g.mu)
-                else:
-                    fixed_values_what.append('gauss1'+' center;'+str(i))
-                    fixed_values.append(g.mu)
-                if g.fwhm_fitted==False:
-                    values_to_be_fitted_what.append('gauss1'+' width;'+str(i))
-                    values_to_be_fitted.append(g.fwhm)
-                else:
-                    fixed_values_what.append('gauss1' +' width;'+str(i))
-                    fixed_values.append(g.fwhm)
-                if g.alpha_fitted==False:
-                    values_to_be_fitted_what.append('gauss1'+' assym;'+str(i))
-                    values_to_be_fitted.append(g.alpha)
-                else:
-                    fixed_values_what.append('gauss1'+' assym;'+str(i))
-                    fixed_values.append(g.alpha)
-                if g.intensity_fitted==False:
-                    values_to_be_fitted_what.append('gauss1'+' intens;'+str(i))
-                    values_to_be_fitted.append(g.intensity)
-                else:
-                    fixed_values_what.append('gauss1' +' intens;'+str(i))
-                    fixed_values.append(g.intensity)
-            if index_model>=1:
-                #add all stuff for tau2
-                if self.radioButton_tau2_fixed.isChecked()==False:
-                    values_to_be_fitted.append(self.doubleSpinBox_global_time_tau2_guess.value())
-                    values_to_be_fitted_what.append('tau2')
-                else:
-                    fixed_values.append(self.doubleSpinBox_global_time_tau2_guess.value())
-                    fixed_values_what.append('tau2')
-                test_fit.gauss2_n=len(self.global_pe_gauss[1])
-                for i,g in enumerate(self.global_pe_gauss[1]):
-                    if g.mu_fitted==False:
-                        values_to_be_fitted_what.append('gauss2'+' center;'+str(i))
-                        values_to_be_fitted.append(g.mu)
-                    else:
-                        fixed_values_what.append('gauss2'+' center;'+str(i))
-                        fixed_values.append(g.mu)
-                    if g.fwhm_fitted==False:
-                        values_to_be_fitted_what.append('gauss2'+' width;'+str(i))
-                        values_to_be_fitted.append(g.fwhm)
-                    else:
-                        fixed_values_what.append('gauss2' +' width;'+str(i))
-                        fixed_values.append(g.fwhm)
-                    if g.alpha_fitted==False:
-                        values_to_be_fitted_what.append('gauss2'+' assym;'+str(i))
-                        values_to_be_fitted.append(g.alpha)
-                    else:
-                        fixed_values_what.append('gauss2'+' assym;'+str(i))
-                        fixed_values.append(g.alpha)
-                    if g.intensity_fitted==False:
-                        values_to_be_fitted_what.append('gauss2'+' intens;'+str(i))
-                        values_to_be_fitted.append(g.intensity)
-                    else:
-                        fixed_values_what.append('gauss2' +' intens;'+str(i))
-                        fixed_values.append(g.intensity)
-                
-                if index_model==2:
-                    #add all stuff for tau3
-                    test_fit.gauss3_n=len(self.global_pe_gauss[2])
-                    if self.radioButton_tau3_fixed.isChecked()==False:
-                        values_to_be_fitted.append(self.doubleSpinBox_global_time_tau2_guess.value())
-                        values_to_be_fitted_what.append('tau3')
-                    else:
-                        fixed_values.append(self.doubleSpinBox_global_time_tau2_guess.value())
-                        fixed_values_what.append('tau3')
-                    for i,g in enumerate(self.global_pe_gauss[2]):          
-                        if g.mu_fitted==False:
-                            values_to_be_fitted_what.append('gauss3'+' center;'+str(i))
-                            values_to_be_fitted.append(g.mu)
-                        else:
-                            fixed_values_what.append('gauss3'+' center;'+str(i))
-                            fixed_values.append(g.mu)
-                        if g.fwhm_fitted==False:
-                            values_to_be_fitted_what.append('gauss3'+' width;'+str(i))
-                            values_to_be_fitted.append(g.fwhm)
-                        else:
-                            fixed_values_what.append('gauss3' +' width;'+str(i))
-                            fixed_values.append(g.fwhm)
-                        if g.alpha_fitted==False:
-                            values_to_be_fitted_what.append('gauss3'+' assym;'+str(i))
-                            values_to_be_fitted.append(g.alpha)
-                        else:
-                            fixed_values_what.append('gauss3'+' assym;'+str(i))
-                            fixed_values.append(g.alpha)
-                        if g.intensity_fitted==False:
-                            values_to_be_fitted_what.append('gauss3'+' intens;'+str(i))
-                            values_to_be_fitted.append(g.intensity)
-                        else:
-                            fixed_values_what.append('gauss3' +' intens;'+str(i))
-                            fixed_values.append(g.intensity)
-        #add offset stuff
-        if self.radioButton_time_final_offset_2.isChecked()==True or self.radioButton_time_offset_2.isChecked()==True:
-            #add the offset stuff
-            test_fit.gaussO_n=len(self.global_pe_gauss[3])
-            for i,g in enumerate(self.global_pe_gauss[3]):
-                if g.mu_fitted==False:
-                    values_to_be_fitted_what.append('gaussO'+' center;'+str(i))
-                    values_to_be_fitted.append(g.mu)
-                else:
-                    fixed_values_what.append('gaussO'+' center;'+str(i))
-                    fixed_values.append(g.mu)
-                if g.fwhm_fitted==False:
-                    values_to_be_fitted_what.append('gaussO'+' width;'+str(i))
-                    values_to_be_fitted.append(g.fwhm)
-                else:
-                    fixed_values_what.append('gaussO' +' width;'+str(i))
-                    fixed_values.append(g.fwhm)
-                if g.alpha_fitted==False:
-                    values_to_be_fitted_what.append('gaussO'+' assym;'+str(i))
-                    values_to_be_fitted.append(g.alpha)
-                else:
-                    fixed_values_what.append('gaussO'+' assym;'+str(i))
-                    fixed_values.append(g.alpha)
-                if g.intensity_fitted==False:
-                    values_to_be_fitted_what.append('gaussO'+' intens;'+str(i))
-                    values_to_be_fitted.append(g.intensity)
-                else:
-                    fixed_values_what.append('gaussO' +' intens;'+str(i))
-                    fixed_values.append(g.intensity)
-        test_fit.init_gauss()
-        test_fit.ptot_function(values_to_be_fitted,values_to_be_fitted_what)
-        test_fit.ptot_function(fixed_values,fixed_values_what)
-        return test_fit,values_to_be_fitted,values_to_be_fitted_what,fixed_values,fixed_values_what
-        
-    def which_model_picked(self,test_fit):
-        index_model=self.comboBox_global_pick_model.currentIndex()
-        if self.radioButton_no_offset_2.isChecked()==True:
-            possible_fitfunc=[test_fit.mono_exp_decay_2D,test_fit.bi_exp_decay_2D,test_fit.tri_exp_decay_2D]
-            fit_function=possible_fitfunc[index_model]
-        elif self.radioButton_time_final_offset_2.isChecked()==True:
-            possible_fitfunc=[test_fit.mono_exp_decay_with_offset_final_2D,test_fit.bi_exp_decay_with_offset_final_2D,test_fit.tri_exp_decay_with_offset_final_2D]
-            fit_function=possible_fitfunc[index_model]
-        elif self.radioButton_time_offset_2.isChecked()==True:
-            possible_fitfunc=[test_fit.mono_exp_decay_with_offset_2D,test_fit.bi_exp_decay_with_offset_2D,test_fit.tri_exp_decay_with_offset_2D]
-            fit_function=possible_fitfunc[index_model]
-        return fit_function
+
     
     @pyqtSlot()
     def on_pushButton_global_invert_time_axis_clicked(self):
@@ -2203,75 +1883,7 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             self.global_TRPES_original_for_bg=np.flip(self.global_TRPES_original_for_bg,axis=0)
         self.on_comboBox_global_TRPES_which_currentIndexChanged(self.comboBox_global_TRPES_which.currentIndex())
 
-        
-    @pyqtSlot()
-    def on_pushButton_global_fit_clicked(self):
-        '''
-        the core function for fitting goes here,
-        using lmfit (seems to offer waaay more functionalities for fitting
-        '''
-        if type(self.global_TRPES)!=type(None):
-            QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-            #fitting it
-            index_model=self.comboBox_global_pick_model.currentIndex()
-            if index_model!=3:
-                test_fit,values_to_be_fitted,values_to_be_fitted_what,fixed_values,fixed_values_what=self.construct_2D_fit_object()
-                test_fit.reporter=[]
-                #decide which fit function you need to take
-                fit_function=self.which_model_picked(test_fit)
-                #fitting it!!
-                t=self.global_time
-                self.global_t_for_fit=t
-                eV=self.global_eV
-                self.global_eV_for_fit=eV
-                TRPES=self.global_TRPES
-                plsq,cov,info,msg,ier=leastsq(test_fit.fit_function,values_to_be_fitted,
-                          args=(values_to_be_fitted_what,fit_function,[[t],[eV]],[TRPES.transpose()]),full_output=True)
-                #get the values out
-                t2=t-test_fit.time_offset[0]
-                self.global_TRPES_fitted=fit_function(np.reshape(t2,(t2.shape[0],1)),0,eV)
-                self.global_TRPES_residual=TRPES-self.global_TRPES_fitted
-                self.global_params_from_fit=[test_fit.extract_Deltas_plsqs(plsq,cov,values_to_be_fitted_what,fit_function,[[t],[eV]],
-                                                                           [TRPES.transpose()],fixed_values,fixed_values_what),
-                                             info,values_to_be_fitted_what,fixed_values_what,fixed_values]
-                self.global_DAS_fitted=[]
-                self.global_decays_fitted=[]
-                test_fit.ptot_function(plsq,values_to_be_fitted_what)
-                if index_model>=0:
-                    self.global_DAS_fitted.append(test_fit.sigma_1(eV))
-                    self.global_decays_fitted.append(test_fit.mono_exp_decay(t,0,eV))
-                    if index_model>=1:
-                        self.global_DAS_fitted.append(test_fit.sigma_2(eV))
-                        self.global_decays_fitted.append(test_fit.bi_exp_decay_population(t,0,eV))
-                        if index_model>=2:
-                            self.global_decays_fitted.append(test_fit.tri_exp_decay_population(t,0,eV))
-                            self.global_DAS_fitted.append(test_fit.sigma_3(eV))
-                if self.radioButton_no_offset_2.isChecked()!=True:
-                    self.global_DAS_fitted.append(test_fit.sigma_offset(eV))
-                    if self.radioButton_time_final_offset_2.isChecked()==True:
-                        possible_decays=[test_fit.mono_exp_decay_final_state_pop,test_fit.bi_exp_decay_final_state_pop,test_fit.tri_exp_decay_final_state_pop]
-                        self.global_decays_fitted.append(possible_decays[index_model](t,0,eV))
-                        possible_final_decays=[test_fit.mono_exp_decay_with_offset_final,test_fit.bi_exp_decay_with_offset_final,test_fit.tri_exp_decay_with_offset_final]
-                        self.global_decays_fitted.append(possible_final_decays[index_model](t,0,eV))
-                    elif self.radioButton_time_offset_2.isChecked()==True:
-                        possible_decays=[test_fit.offset,test_fit.offset,test_fit.offset]
-                        self.global_decays_fitted.append(possible_decays[index_model](t,0,eV))
-                        possible_final_decays=[test_fit.mono_exp_decay_with_offset,test_fit.bi_exp_decay_with_offset,test_fit.tri_exp_decay_with_offset]
-                        self.global_decays_fitted.append(possible_final_decays[index_model](t,0,eV))
-                else:
-                        possible_final_decays=[test_fit.mono_exp_decay,test_fit.bi_exp_decay,test_fit.tri_exp_decay]
-                        self.global_decays_fitted.append(possible_final_decays[index_model](t,0,eV))
-                #plot the stuff
-                self.test_fit=test_fit
-                self.plot_DAS()
-                self.plot_global_decays()
-                self.update_overview_results()
-                self.comboBox_global_fit_or_residual.setCurrentIndex(0)
-                self.on_comboBox_global_fit_or_residual_currentIndexChanged(0)
-                self.update_optimization_viewer()
-            else:
-                print('Autocorrelation fits are only possible with the Fit2! method')
-            QApplication.restoreOverrideCursor()
+
             
     
     @pyqtSlot('int')
@@ -2303,6 +1915,7 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             names.append('offset')
         if normed==False:
             max2=0
+            min2=0
             for i,curve in enumerate(self.global_DAS_fitted):
                 print('i',i)
                 print(names)
@@ -2311,8 +1924,10 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                 self.viewer_DAS.plot(self.global_eV,curve.transpose()[:,0],pen=pg.mkPen(self.colors[i],width=2),name=names[i])
                 if np.max(curve)>=max2:
                     max2=np.max(curve)
+                if np.min(curve)<=min2:
+                    min2=np.min(curve)
             self.viewer_DAS.setXRange(self.global_eV[0],self.global_eV[-1])
-            self.viewer_DAS.setYRange(0,max2)
+            self.viewer_DAS.setYRange(min2,max2)
         else:
             print('jodidoo')
             
@@ -2345,7 +1960,8 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         if self.radioButton_time_final_offset_2.isChecked()==True or self.radioButton_time_offset_2.isChecked()==True:
             names.append('offset')
         total_decay=np.zeros(self.global_decays_fitted[0].shape)
-        for i,curve in enumerate(self.global_decays_fitted[:-1]):
+        print('len of DAS',len(self.global_DAS_fitted),'len of decays',len(self.global_decays_fitted))
+        for i,curve in enumerate(self.global_decays_fitted):
             self.viewer_DAS_decays.plot(self.global_t_for_fit,curve*np.max(self.global_DAS_fitted),pen=pg.mkPen(self.colors[i],width=2),name=names[i])
             total_decay+=curve*np.max(self.global_DAS_fitted)
         self.viewer_DAS_decays.plot(self.global_t_for_fit,total_decay,pen=pg.mkPen((0,0,0),width=2),name='total')
@@ -2358,10 +1974,10 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         text+='_________________________________\n'
         text+='Number of iterations ' +str(self.global_params_from_fit[1]['nfev'])+'\n'
         text+='_________________________________\n'
-        if second_fit==False:
-            text+='DAS approximated as Gaussian spectra (Fit)\n'
+        if self.checkBox_global_parallel.isChecked()==False:
+            text+='Assuming sequential mechanism\n'
         else:
-            text+='No DAS assumed a priori (Fit2)\n'
+            text+='Assuming parallel mechanism\n'
 
         for i in range(len(self.global_params_from_fit[2])):
             unit=' ps'
@@ -2477,82 +2093,10 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             self.viewer_optimization.setLabel('left', "error", units='arb.u.')
             self.viewer_optimization.setLabel('bottom', "Number of iterations", units='')
 
-    @pyqtSlot()                    
-    def on_pushButton_global_load_DAS_clicked(self):
-        '''
-        load previously saved settings from a .json file
-        '''
-        if type(self.global_TRPES)!=type(None):
-            filename = QFileDialog.getOpenFileName(self, 'Open File',self.dir,filter="Json Files (*.json )")[0]
-            #load the data of the json file
-            with open(filename,'r') as read_file:
-                data=json.load(read_file,object_hook=decode_anja)
+    @pyqtSlot('bool')
+    def on_checkBox_global_parallel_toggled(self,state):
+        self.viewer_global_time_guess_update()
 
-            #first deactivate all signals
-            self.setUpdatesEnabled(False)
-            #update all values
-            self.global_pe_gauss=data['self.global_pe_gauss']
-            #for gauss in self.global_gauss[0]:
-            #    gauss.print_gauss()
-            self.comboBox_global_PE_guess_DAS_which.setCurrentIndex(data['comboBox_global_PE_guess_DAS_which'])
-            self.spinBox_global_PE_number.setValue(data['spinBox_global_PE_number'])
-            self.comboBox_global_PE_current.setCurrentIndex(data['comboBox_global_PE_current'])
-            #time_constants:
-            self.doubleSpinBox_global_time_tau1_guess.setValue(data['tau1'])
-            self.radioButton_tau1_fixed.setChecked(data['tau1_fixed'])
-            self.doubleSpinBox_global_time_tau1_guess.setValue(data['tau2'])
-            self.radioButton_tau2_fixed.setChecked(data['tau2_fixed'])
-            self.doubleSpinBox_global_time_tau1_guess.setValue(data['tau3'])
-            self.radioButton_tau3_fixed.setChecked(data['tau3_fixed'])
-            self.doubleSpinBox_guess_time_irf_guess.setValue(data['IRF'])
-            self.radioButton_IRF_fixed.setChecked(data['IRF_fixed'])
-            self.doubleSpinBox_global_time_pos_irf_guess.setValue(data['pos'])
-            self.radioButton_pos_fixed.setChecked(data['pos_fixed'])
-            self.radioButton_no_offset_2.setChecked(data['no_offset'])
-            self.radioButton_time_final_offset_2.setChecked(data['final_offset'])
-            self.radioButton_time_offset_2.setChecked(data['offset?'])
-            self.comboBox_global_pick_model.setCurrentIndex(data['comboBox_global_pick_model'])
-
-            #enable them again
-            self.setUpdatesEnabled(True)
-            #update all the plots
-            self.viewer_global_time_guess_update()
-            self.update_global_gauss()
-
-    @pyqtSlot()
-    def on_pushButton_global_save_DAS_clicked(self):
-        '''
-        save current settings of DAS and time stuff
-        '''
-        filename=QFileDialog.getSaveFileName(self, 'Save File',self.dir,filter="Json Files (*.json )")[0]
-        filename=filename.split('.')[0]
-        filename+='.json'
-        #creating a big dictionairy with all the values that you want to save
-        data={}
-        #PE
-        data['self.global_pe_gauss']=self.global_pe_gauss
-        data['comboBox_global_PE_guess_DAS_which']=self.comboBox_global_PE_guess_DAS_which.currentIndex()
-        data['spinBox_global_PE_number']=self.spinBox_global_PE_number.value()
-        data['comboBox_global_PE_current']=self.comboBox_global_PE_current.currentIndex()
-        #time_constants:
-        data['tau1']=self.doubleSpinBox_global_time_tau1_guess.value()
-        data['tau1_fixed']=self.radioButton_tau1_fixed.isChecked()
-        data['tau2']=self.doubleSpinBox_global_time_tau1_guess.value()
-        data['tau2_fixed']=self.radioButton_tau2_fixed.isChecked()
-        data['tau3']=self.doubleSpinBox_global_time_tau1_guess.value()
-        data['tau3_fixed']=self.radioButton_tau3_fixed.isChecked()
-        data['IRF']=self.doubleSpinBox_guess_time_irf_guess.value()
-        data['IRF_fixed']=self.radioButton_IRF_fixed.isChecked()
-        data['pos']=self.doubleSpinBox_global_time_pos_irf_guess.value()
-        data['pos_fixed']=self.radioButton_pos_fixed.isChecked()
-        data['no_offset']=self.radioButton_no_offset_2.isChecked()
-        data['final_offset']=self.radioButton_time_final_offset_2.isChecked()
-        data['offset?']=self.radioButton_time_offset_2.isChecked()
-        data['comboBox_global_pick_model']=self.comboBox_global_pick_model.currentIndex()
-
-        #dump the data
-        with open(filename,'w') as write_file:
-            json.dump(data,write_file,default=encode_anja)
             
     def construct_2D_object_for_fitmethod2(self,z,factors):
         '''
@@ -2653,31 +2197,50 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             fit_func_interm=test_fit.interm_fit.fct_auto_corr
             fit_func_interm_what='fct_auto_corr'
             fit_function=test_fit.fct_auto_corr
-        elif self.radioButton_no_offset_2.isChecked()==True:
-            possible_fitfunc=[test_fit.mono_exp_decay,test_fit.bi_exp_decay,test_fit.tri_exp_decay]
-            possible_fitfunc_interm=[test_fit.interm_fit.mono_exp_decay,test_fit.interm_fit.bi_exp_decay,test_fit.interm_fit.tri_exp_decay]
-            possible_fitfunc_interm_what=['mono_exp_decay','bi_exp_decay','tri_exp_decay']
-            fit_func_interm=possible_fitfunc_interm[index_model]
-            fit_func_interm_what=possible_fitfunc_interm_what[index_model]
-            fit_function=possible_fitfunc[index_model]
+        elif self.checkBox_global_parallel.isChecked()==False:
+            if self.radioButton_no_offset_2.isChecked()==True:
+                possible_fitfunc=[test_fit.mono_exp_decay,test_fit.bi_exp_decay,test_fit.tri_exp_decay]
+                possible_fitfunc_interm=[test_fit.interm_fit.mono_exp_decay,test_fit.interm_fit.bi_exp_decay,test_fit.interm_fit.tri_exp_decay]
+                possible_fitfunc_interm_what=['mono_exp_decay','bi_exp_decay','tri_exp_decay']
+                fit_func_interm=possible_fitfunc_interm[index_model]
+                fit_func_interm_what=possible_fitfunc_interm_what[index_model]
+                fit_function=possible_fitfunc[index_model]
+                
+            elif self.radioButton_time_final_offset_2.isChecked()==True:
+                possible_fitfunc=[test_fit.mono_exp_decay_with_offset_final,test_fit.bi_exp_decay_with_offset_final,test_fit.tri_exp_decay_with_offset_final]
+                possible_fitfunc_interm=[test_fit.interm_fit.mono_exp_decay_with_offset_final,
+                                         test_fit.interm_fit.bi_exp_decay_with_offset_final,test_fit.interm_fit.tri_exp_decay_with_offset_final]
+                possible_fitfunc_interm_what=['mono_exp_decay_offset_final','bi_exp_decay_offset_final','tri_exp_decay_offset_final']
+                fit_func_interm=possible_fitfunc_interm[index_model]
+                fit_func_interm_what=possible_fitfunc_interm_what[index_model]
+                fit_function=possible_fitfunc[index_model]
+                
+            elif self.radioButton_time_offset_2.isChecked()==True:
+                possible_fitfunc=[test_fit.mono_exp_decay_with_offset,test_fit.bi_exp_decay_with_offset,test_fit.tri_exp_decay_with_offset]
+                possible_fitfunc_interm=[test_fit.interm_fit.mono_exp_decay_with_offset,
+                                         test_fit.interm_fit.bi_exp_decay_with_offset,test_fit.interm_fit.tri_exp_decay_with_offset]
+                possible_fitfunc_interm_what=['mono_exp_decay_with_offset','bi_exp_decay_with_offset','tri_exp_decay_with_offset']
+                fit_func_interm=possible_fitfunc_interm[index_model]
+                fit_func_interm_what=possible_fitfunc_interm_what[index_model]
+                fit_function=possible_fitfunc[index_model]
+        elif  self.checkBox_global_parallel.isChecked()==True:
+            if self.radioButton_no_offset_2.isChecked()==True:
+                possible_fitfunc=[test_fit.mono_exp_parallel,test_fit.bi_exp_parallel,test_fit.tri_exp_parallel]
+                possible_fitfunc_interm=[test_fit.interm_fit.mono_exp_parallel,test_fit.interm_fit.bi_exp_parallel,test_fit.interm_fit.tri_exp_parallel]
+                possible_fitfunc_interm_what=['mono_exp_decay','bi_exp_decay','tri_exp_decay']
+                fit_func_interm=possible_fitfunc_interm[index_model]
+                fit_func_interm_what=possible_fitfunc_interm_what[index_model]
+                fit_function=possible_fitfunc[index_model]
+                
+            else:
+                possible_fitfunc=[test_fit.mono_exp_parallel_offset,test_fit.bi_exp_parallel_offset,test_fit.tri_exp_parallel_offset]
+                possible_fitfunc_interm=[test_fit.interm_fit.mono_exp_parallel_offset,
+                                         test_fit.interm_fit.bi_exp_parallel_offset,test_fit.interm_fit.tri_exp_parallel_offset]
+                possible_fitfunc_interm_what=['mono_exp_decay_with_offset','bi_exp_decay_with_offset','tri_exp_decay_with_offset']
+                fit_func_interm=possible_fitfunc_interm[index_model]
+                fit_func_interm_what=possible_fitfunc_interm_what[index_model]
+                fit_function=possible_fitfunc[index_model]
             
-        elif self.radioButton_time_final_offset_2.isChecked()==True:
-            possible_fitfunc=[test_fit.mono_exp_decay_with_offset_final,test_fit.bi_exp_decay_with_offset_final,test_fit.tri_exp_decay_with_offset_final]
-            possible_fitfunc_interm=[test_fit.interm_fit.mono_exp_decay_with_offset_final,
-                                     test_fit.interm_fit.bi_exp_decay_with_offset_final,test_fit.interm_fit.tri_exp_decay_with_offset_final]
-            possible_fitfunc_interm_what=['mono_exp_decay_offset_final','bi_exp_decay_offset_final','tri_exp_decay_offset_final']
-            fit_func_interm=possible_fitfunc_interm[index_model]
-            fit_func_interm_what=possible_fitfunc_interm_what[index_model]
-            fit_function=possible_fitfunc[index_model]
-            
-        elif self.radioButton_time_offset_2.isChecked()==True:
-            possible_fitfunc=[test_fit.mono_exp_decay_with_offset,test_fit.bi_exp_decay_with_offset,test_fit.tri_exp_decay_with_offset]
-            possible_fitfunc_interm=[test_fit.interm_fit.mono_exp_decay_with_offset,
-                                     test_fit.interm_fit.bi_exp_decay_with_offset,test_fit.interm_fit.tri_exp_decay_with_offset]
-            possible_fitfunc_interm_what=['mono_exp_decay_with_offset','bi_exp_decay_with_offset','tri_exp_decay_with_offset']
-            fit_func_interm=possible_fitfunc_interm[index_model]
-            fit_func_interm_what=possible_fitfunc_interm_what[index_model]
-            fit_function=possible_fitfunc[index_model]
         return fit_function,fit_func_interm,fit_func_interm_what
            
     @pyqtSlot()
@@ -2728,52 +2291,71 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             #fitting it!
             plsq,cov,info,msg,ier=leastsq(test_fit.fit_function,values_to_be_fitted,
                               args=(values_to_be_fitted_what,fit_function,tfit,yfit,
-                                    fit_func_interm,fit_func_interm_what,self.checkBox_global_floating_t0.isChecked()),full_output=True,maxfev=self.spinBox_max_Iterations_fit.value())
+                                    fit_func_interm,fit_func_interm_what,self.checkBox_global_floating_t0.isChecked(),self.checkBox_global_parallel.isChecked()),
+                                    full_output=True,maxfev=self.spinBox_max_Iterations_fit.value())
             #sweet! Now update/get incertituted all the other stuff
             t2=t+test_fit.time_offset[0]
             test_fit.ptot_function(plsq,values_to_be_fitted_what)
             self.global_params_from_fit=[test_fit.extract_Deltas_plsqs(plsq,cov,values_to_be_fitted_what,fit_function,tfit,yfit,
-                                               fit_func_interm,fit_func_interm_what),
+                                               fit_func_interm,fit_func_interm_what,self.checkBox_global_parallel.isChecked()),
                                          info,values_to_be_fitted_what,fixed_values_what,fixed_values]
-            print(test_fit.time_offset)
             self.global_DAS_fitted=[]
             self.global_decays_fitted=[]
             if index_model==3:
                 self.global_DAS_fitted.append(np.atleast_2d(np.array(test_fit.sigma_1)))
                 decay=test_fit.fct_auto_corr(t2,0)
                 self.global_decays_fitted.append(decay)
-            elif index_model>=0:
-                self.global_DAS_fitted.append(np.atleast_2d(np.array(test_fit.sigma_1)))
-                test_fit.sigma_1[0]=1.
-                decay=test_fit.mono_exp_decay(t2,0)
-                self.global_decays_fitted.append(decay)
-                if index_model>=1:
-                    self.global_DAS_fitted.append(np.atleast_2d(np.array(test_fit.sigma_2)))
-                    test_fit.sigma_2[0]=1.
-                    decay=test_fit.bi_exp_decay_population(t2,0)
+            elif self.checkBox_global_parallel.isChecked()==False:
+                if index_model>=0:
+                    self.global_DAS_fitted.append(np.atleast_2d(np.array(test_fit.sigma_1)))
+                    test_fit.sigma_1[0]=1.
+                    decay=test_fit.mono_exp_decay(t2,0)
                     self.global_decays_fitted.append(decay)
-                    if index_model>=2:
-                        self.global_DAS_fitted.append(np.atleast_2d(np.array(test_fit.sigma_3)))
-                        test_fit.sigma_3[0]=1.
-                        decay=test_fit.tri_exp_decay_population(t2,0)
+                    if index_model>=1:
+                        self.global_DAS_fitted.append(np.atleast_2d(np.array(test_fit.sigma_2)))
+                        test_fit.sigma_2[0]=1.
+                        decay=test_fit.bi_exp_decay_population(t2,0)
                         self.global_decays_fitted.append(decay)
-            if self.radioButton_no_offset_2.isChecked()!=True:
-                self.global_DAS_fitted.append(np.atleast_2d(np.array(test_fit.sigma_offset)))
-                test_fit.sigma_offset[0]=1.
-                if self.radioButton_time_final_offset_2.isChecked()==True:
-                    possible_decays=[test_fit.mono_exp_decay_final_state_pop,test_fit.bi_exp_decay_final_state_pop,test_fit.tri_exp_decay_final_state_pop]
-                    decay=possible_decays[index_model](t2,0)
+                        if index_model>=2:
+                            self.global_DAS_fitted.append(np.atleast_2d(np.array(test_fit.sigma_3)))
+                            test_fit.sigma_3[0]=1.
+                            decay=test_fit.tri_exp_decay_population(t2,0)
+                            self.global_decays_fitted.append(decay)
+                if self.radioButton_no_offset_2.isChecked()!=True:
+                    self.global_DAS_fitted.append(np.atleast_2d(np.array(test_fit.sigma_offset)))
+                    test_fit.sigma_offset[0]=1.
+                    if self.radioButton_time_final_offset_2.isChecked()==True:
+                        possible_decays=[test_fit.mono_exp_decay_final_state_pop,test_fit.bi_exp_decay_final_state_pop,test_fit.tri_exp_decay_final_state_pop]
+                        decay=possible_decays[index_model](t2,0)
+                        self.global_decays_fitted.append(decay)
+                        possible_final_decays=[test_fit.mono_exp_decay_with_offset_final,test_fit.bi_exp_decay_with_offset_final,test_fit.tri_exp_decay_with_offset_final]
+                        self.global_decays_fitted.append(possible_final_decays[index_model](t2,0))
+                    elif self.radioButton_time_offset_2.isChecked()==True:
+                        possible_decays=[test_fit.offset,test_fit.offset,test_fit.offset]
+                        self.global_decays_fitted.append(possible_decays[index_model](t2,0))
+                        possible_final_decays=[test_fit.mono_exp_decay_with_offset,test_fit.bi_exp_decay_with_offset,test_fit.tri_exp_decay_with_offset]
+                        self.global_decays_fitted.append(possible_final_decays[index_model](t2,0))
+            elif self.checkBox_global_parallel.isChecked()==True:
+                if index_model>=0:
+                    self.global_DAS_fitted.append(np.atleast_2d(np.array(test_fit.sigma_1)))
+                    test_fit.sigma_1[0]=1.
+                    decay=test_fit.mono_exp_parallel(t2,0)
                     self.global_decays_fitted.append(decay)
-                    possible_final_decays=[test_fit.mono_exp_decay_with_offset_final,test_fit.bi_exp_decay_with_offset_final,test_fit.tri_exp_decay_with_offset_final]
-                    self.global_decays_fitted.append(possible_final_decays[index_model](t2,0))
-                elif self.radioButton_time_offset_2.isChecked()==True:
-                    possible_decays=[test_fit.offset,test_fit.offset,test_fit.offset]
-                    self.global_decays_fitted.append(possible_decays[index_model](t2,0))
-                    possible_final_decays=[test_fit.mono_exp_decay_with_offset,test_fit.bi_exp_decay_with_offset,test_fit.tri_exp_decay_with_offset]
-                    self.global_decays_fitted.append(possible_final_decays[index_model](t2,0))
-            else:
-                    possible_final_decays=[test_fit.mono_exp_decay,test_fit.bi_exp_decay,test_fit.tri_exp_decay,test_fit.fct_auto_corr]
-                    self.global_decays_fitted.append(possible_final_decays[index_model](t2,0))
+                    if index_model>=1:
+                        self.global_DAS_fitted.append(np.atleast_2d(np.array(test_fit.sigma_2)))
+                        test_fit.sigma_2[0]=1.
+                        decay=test_fit.bi_exp_parallel_pop(t2,0)
+                        self.global_decays_fitted.append(decay)
+                        if index_model>=2:
+                            self.global_DAS_fitted.append(np.atleast_2d(np.array(test_fit.sigma_3)))
+                            test_fit.sigma_3[0]=1.
+                            decay=test_fit.tri_exp_parallel_pop(t2,0)
+                            self.global_decays_fitted.append(decay)
+                if self.radioButton_no_offset_2.isChecked()==False:
+                    self.global_DAS_fitted.append(np.atleast_2d(np.array(test_fit.sigma_offset)))
+                    test_fit.sigma_offset[0]=1
+                    decay=test_fit.offset(t2,0)
+                    self.global_decays_fitted.append(decay)
             #get the global_TRPES_fitted and the residual out of the DAS and possible_decay_spectra
             self.global_TRPES_fitted=np.zeros((eV.shape[0],t.shape[0]))
             if self.checkBox_global_floating_t0.isChecked()==False:
@@ -3103,6 +2685,12 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
     #all functions regrouped from the time buttons
     #----------------------------------
     @pyqtSlot('bool')
+    def on_checkBox_global_bidir_pos_parallel_toggled(self,value):
+        self.viewer_global_time_guess_bidir_update()
+    @pyqtSlot('bool')
+    def on_checkBox_global_bidir_min_parallel_toggled(self,value):
+        self.viewer_global_time_guess_bidir_update()
+    @pyqtSlot('bool')
     def on_checkBox_global_bidir_time_display_all_toggled(self,value):
         self.viewer_global_time_guess_bidir_update()
     @pyqtSlot('double')
@@ -3145,9 +2733,14 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             #display a first fit
             #get the stuff in the positive direction
             t=self.global_time_bidir+self.doubleSpinBox_global_time_pos_irf_guess_bidir_pos_2.value()
-            all_curves_taus=[self.global_fit_bidir.mono_exp_decay(t,0),
-                    self.global_fit_bidir.bi_exp_decay_population(t,0),
-                    self.global_fit_bidir.tri_exp_decay_population(t,0)]
+            if self.checkBox_global_bidir_pos_parallel.isChecked()==False:
+                all_curves_taus=[self.global_fit_bidir.mono_exp_decay(t,0),
+                        self.global_fit_bidir.bi_exp_decay_population(t,0),
+                        self.global_fit_bidir.tri_exp_decay_population(t,0)]
+            else:
+                all_curves_taus=[self.global_fit_bidir.mono_exp_parallel(t,0),
+                        self.global_fit_bidir.bi_exp_parallel_pop(t,0),
+                        self.global_fit_bidir.tri_exp_parallel_pop(t,0)]
             names=['mono-exp','bi-exp','tri-exp']
             all_curves_final_offset=[self.global_fit_bidir.mono_exp_decay_final_state_pop(t,0),
                                  self.global_fit_bidir.bi_exp_decay_final_state_pop(t,0),
@@ -3155,28 +2748,43 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             all_curves_offset=self.global_fit_bidir.offset(t,0) 
             time_curves_pos=all_curves_taus[:self.comboBox_global_pick_model_bidir_pos_3.currentIndex()+1]
             names_pos=names[:self.comboBox_global_pick_model_bidir_pos_3.currentIndex()+1]
-            if self.radioButton_time_final_offset_bidir_pos_3.isChecked()==True:
-                time_curves_pos.append(all_curves_final_offset[self.comboBox_global_pick_model_bidir_pos_3.currentIndex()])
-                names_pos.append('offset')
-            elif self.radioButton_time_offset_bidir_pos_3.isChecked()==True:
-                time_curves_pos.append(all_curves_offset)
-                names_pos.append('offset')
+            if self.checkBox_global_bidir_pos_parallel.isChecked()==False:
+                if self.radioButton_time_final_offset_bidir_pos_3.isChecked()==True:
+                    time_curves_pos.append(all_curves_final_offset[self.comboBox_global_pick_model_bidir_pos_3.currentIndex()])
+                    names_pos.append('offset')
+                elif self.radioButton_time_offset_bidir_pos_3.isChecked()==True:
+                    time_curves_pos.append(all_curves_offset)
+                    names_pos.append('offset')
+            else:
+                if self.radioButton_no_offset_bidir_pos_3.isChecked()==False:
+                    time_curves_pos.append(all_curves_offset)
+                    names_pos.append('offset')
             #get the stuff in the negative direction
-            all_curves_taus=[self.global_fit_bidir.mono_exp_decay(-t,1),
-                    self.global_fit_bidir.bi_exp_decay_population(-t,1),
-                    self.global_fit_bidir.tri_exp_decay_population(-t,1)]
+            if self.checkBox_global_bidir_min_parallel.isChecked()==False:
+                all_curves_taus=[self.global_fit_bidir.mono_exp_decay(-t,1),
+                        self.global_fit_bidir.bi_exp_decay_population(-t,1),
+                        self.global_fit_bidir.tri_exp_decay_population(-t,1)]
+            else:
+                all_curves_taus=[self.global_fit_bidir.mono_exp_parallel(-t,1),
+                        self.global_fit_bidir.bi_exp_parallel_pop(-t,1),
+                        self.global_fit_bidir.tri_exp_parallel_pop(-t,1)]
             all_curves_final_offset=[self.global_fit_bidir.mono_exp_decay_final_state_pop(-t,1),
                                  self.global_fit_bidir.bi_exp_decay_final_state_pop(-t,1),
                                  self.global_fit_bidir.tri_exp_decay_final_state_pop(-t,1)]
             all_curves_offset=self.global_fit_bidir.offset(-t,1) 
             time_curves_min=all_curves_taus[:self.comboBox_global_pick_model_bidir_min_2.currentIndex()+1]
             names_min=names[:self.comboBox_global_pick_model_bidir_min_2.currentIndex()+1]
-            if self.radioButton_time_final_offset_bidir_min_2.isChecked()==True:
-                time_curves_min.append(all_curves_final_offset[self.comboBox_global_pick_model_bidir_min_2.currentIndex()])
-                names_min.append('offset')
-            elif self.radioButton_time_offset_bidir_min_2.isChecked()==True:
-                time_curves_min.append(all_curves_offset)
-                names_min.append('offset')
+            if self.checkBox_global_bidir_min_parallel.isChecked()==False:
+                if self.radioButton_time_final_offset_bidir_min_2.isChecked()==True:
+                    time_curves_min.append(all_curves_final_offset[self.comboBox_global_pick_model_bidir_min_2.currentIndex()])
+                    names_min.append('offset')
+                elif self.radioButton_time_offset_bidir_min_2.isChecked()==True:
+                    time_curves_min.append(all_curves_offset)
+                    names_min.append('offset')
+            else:
+                if self.radioButton_no_offset_bidir_min_2.isChecked()==False:
+                    time_curves_min.append(all_curves_offset)
+                    names_min.append('offset')
             summed_decay=np.zeros(self.global_time_bidir.shape[0])
             
             for i,curve in enumerate(time_curves_min):
@@ -3333,23 +2941,36 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         #deciding which positive and negative fitfunction
         fit_func_interm=[]
         for n,model in enumerate([index_model_pos,index_model_min]):
-            if [self.radioButton_no_offset_bidir_pos_3.isChecked(),self.radioButton_no_offset_bidir_min_2.isChecked()][n]==True:
-                possible_fitfunc_interm=[self.global_fit_bidir_2d.interm_fit.mono_exp_decay,
-                                             self.global_fit_bidir_2d.interm_fit.bi_exp_decay,
-                                             self.global_fit_bidir_2d.interm_fit.tri_exp_decay]
-                fit_func_interm.append(possible_fitfunc_interm[model])
-                
-            elif [self.radioButton_time_final_offset_bidir_pos_3.isChecked(),self.radioButton_time_final_offset_bidir_min_2.isChecked()][n]==True:
-                possible_fitfunc_interm=[self.global_fit_bidir_2d.interm_fit.mono_exp_decay_with_offset_final,
-                                  self.global_fit_bidir_2d.interm_fit.bi_exp_decay_with_offset_final,
-                                  self.global_fit_bidir_2d.interm_fit.tri_exp_decay_with_offset_final]
-                fit_func_interm.append(possible_fitfunc_interm[model])
-                
-            elif [self.radioButton_time_offset_bidir_pos_3.isChecked(),self.radioButton_time_offset_bidir_min_2.isChecked()][n]==True:
-                possible_fitfunc_interm=[self.global_fit_bidir_2d.interm_fit.mono_exp_decay_with_offset,
-                                  self.global_fit_bidir_2d.interm_fit.bi_exp_decay_with_offset,
-                                  self.global_fit_bidir_2d.interm_fit.tri_exp_decay_with_offset]
-                fit_func_interm.append(possible_fitfunc_interm[model])
+            if [self.checkBox_global_bidir_pos_parallel.isChecked(),self.checkBox_global_bidir_min_parallel.isChecked()][n]==False:
+                if [self.radioButton_no_offset_bidir_pos_3.isChecked(),self.radioButton_no_offset_bidir_min_2.isChecked()][n]==True:
+                    possible_fitfunc_interm=[self.global_fit_bidir_2d.interm_fit.mono_exp_decay,
+                                                 self.global_fit_bidir_2d.interm_fit.bi_exp_decay,
+                                                 self.global_fit_bidir_2d.interm_fit.tri_exp_decay]
+                    fit_func_interm.append(possible_fitfunc_interm[model])
+                    
+                elif [self.radioButton_time_final_offset_bidir_pos_3.isChecked(),self.radioButton_time_final_offset_bidir_min_2.isChecked()][n]==True:
+                    possible_fitfunc_interm=[self.global_fit_bidir_2d.interm_fit.mono_exp_decay_with_offset_final,
+                                      self.global_fit_bidir_2d.interm_fit.bi_exp_decay_with_offset_final,
+                                      self.global_fit_bidir_2d.interm_fit.tri_exp_decay_with_offset_final]
+                    fit_func_interm.append(possible_fitfunc_interm[model])
+                    
+                elif [self.radioButton_time_offset_bidir_pos_3.isChecked(),self.radioButton_time_offset_bidir_min_2.isChecked()][n]==True:
+                    possible_fitfunc_interm=[self.global_fit_bidir_2d.interm_fit.mono_exp_decay_with_offset,
+                                      self.global_fit_bidir_2d.interm_fit.bi_exp_decay_with_offset,
+                                      self.global_fit_bidir_2d.interm_fit.tri_exp_decay_with_offset]
+                    fit_func_interm.append(possible_fitfunc_interm[model])
+            else:
+                if [self.radioButton_no_offset_bidir_pos_3.isChecked(),self.radioButton_no_offset_bidir_min_2.isChecked()][n]==True:
+                    possible_fitfunc_interm=[self.global_fit_bidir_2d.interm_fit.mono_exp_parallel,
+                                                 self.global_fit_bidir_2d.interm_fit.bi_exp_parallel,
+                                                 self.global_fit_bidir_2d.interm_fit.tri_exp_parallel]
+                    fit_func_interm.append(possible_fitfunc_interm[model])
+                    
+                elif [self.radioButton_no_offset_bidir_pos_3.isChecked(),self.radioButton_no_offset_bidir_min_2.isChecked()][n]==False:
+                    possible_fitfunc_interm=[self.global_fit_bidir_2d.interm_fit.mono_exp_parallel_offset,
+                                      self.global_fit_bidir_2d.interm_fit.bi_exp_parallel_offset,
+                                      self.global_fit_bidir_2d.interm_fit.tri_exp_parallel_offset]
+                    fit_func_interm.append(possible_fitfunc_interm[model])
         function_pos=fit_func_interm[0]
         function_min=fit_func_interm[1]        
         return function_pos,function_min,values_to_fit_what,values_to_fit,tfit,yfit,values_fixed,values_fixed_what
@@ -3370,10 +2991,13 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             
             function_pos,function_min,values_to_fit_what,values_to_fit,tfit,yfit,values_fixed,values_fixed_what=self.update_global_fit_bidir_2d_object()
             plsq,cov,info,msg,ier=leastsq(self.global_fit_bidir_2d.fit_function,values_to_fit,
-                          args=(values_to_fit_what,function_pos,function_min,tfit,yfit,self.checkBox_global_bidir_floating_t0.isChecked()),
+                          args=(values_to_fit_what,function_pos,function_min,tfit,yfit,self.checkBox_global_bidir_floating_t0.isChecked(),
+                                self.checkBox_global_bidir_pos_parallel.isChecked(),self.checkBox_global_bidir_min_parallel.isChecked()),
                           full_output=True,maxfev=self.spinBox_max_Iterations_fit_bidir.value())
             #get the deltas
-            plsqs,Deltas=self.global_fit_bidir_2d.extract_Deltas_plsqs(plsq,cov,values_to_fit_what,function_pos,function_min,tfit,yfit)
+            plsqs,Deltas=self.global_fit_bidir_2d.extract_Deltas_plsqs(plsq,cov,values_to_fit_what,function_pos,function_min,tfit,yfit,
+                                                                       self.checkBox_global_bidir_floating_t0.isChecked(),
+                                                                       self.checkBox_global_bidir_pos_parallel.isChecked(),self.checkBox_global_bidir_min_parallel.isChecked())
             self.global_fit_bidir_2d.ptot_function(plsqs,values_to_fit_what)
             #get the DAS out+plot them
             self.get_and_plot_DAS(function_pos,function_min)
@@ -3475,26 +3099,37 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         times=[self.global_time_bidir_fitted+self.global_fit_bidir_2d.time_offset[0],-(self.global_time_bidir_fitted+self.global_fit_bidir_2d.time_offset[0])]
         names=[[],[]]
         for n,model in enumerate([index_model_pos,index_model_min]):
-            possible_fitfunc=[self.global_fit_bidir_2d.mono_exp_decay(times[n],n),
-                                         self.global_fit_bidir_2d.bi_exp_decay_population(times[n],n),
-                                         self.global_fit_bidir_2d.tri_exp_decay_population(times[n],n)]
-            self.global_decays_bidir[n]=possible_fitfunc[:model+1]
-            names_t=['mono-exp','bi-exp','tri-exp']
-            names[n]=names_t[:model+1]
-            if [self.radioButton_time_final_offset_bidir_pos_3.isChecked(),self.radioButton_time_final_offset_bidir_min_2.isChecked()][n]==True:
-                possible_fitfunc=[self.global_fit_bidir_2d.mono_exp_decay_final_state_pop(times[n],n),
-                                  self.global_fit_bidir_2d.bi_exp_decay_final_state_pop(times[n],n),
-                                  self.global_fit_bidir_2d.tri_exp_decay_final_state_pop(times[n],n)]
-                self.global_decays_bidir[n].append(possible_fitfunc[model])
-                names_t=['mono-ex-offset','bi-exp-offset','tri-exp-offset']
-                names[n].append('offset')
-                
-            elif [self.radioButton_time_offset_bidir_pos_3.isChecked(),self.radioButton_time_offset_bidir_min_2.isChecked()][n]==True:
-                possible_fitfunc=[self.global_fit_bidir_2d.offset(times[n],n),
-                                  self.global_fit_bidir_2d.offset(times[n],n),
-                                  self.global_fit_bidir_2d.offset(times[n],n)]
-                names[n].append('offset')
-                self.global_decays_bidir[n].append(possible_fitfunc[model])
+            if [self.checkBox_global_bidir_pos_parallel.isChecked(),self.checkBox_global_bidir_min_parallel.isChecked()][n]==False:
+                possible_fitfunc=[self.global_fit_bidir_2d.mono_exp_decay(times[n],n),
+                                             self.global_fit_bidir_2d.bi_exp_decay_population(times[n],n),
+                                             self.global_fit_bidir_2d.tri_exp_decay_population(times[n],n)]
+                self.global_decays_bidir[n]=possible_fitfunc[:model+1]
+                names_t=['mono-exp','bi-exp','tri-exp']
+                names[n]=names_t[:model+1]
+                if [self.radioButton_time_final_offset_bidir_pos_3.isChecked(),self.radioButton_time_final_offset_bidir_min_2.isChecked()][n]==True:
+                    possible_fitfunc=[self.global_fit_bidir_2d.mono_exp_decay_final_state_pop(times[n],n),
+                                      self.global_fit_bidir_2d.bi_exp_decay_final_state_pop(times[n],n),
+                                      self.global_fit_bidir_2d.tri_exp_decay_final_state_pop(times[n],n)]
+                    self.global_decays_bidir[n].append(possible_fitfunc[model])
+                    names_t=['mono-ex-offset','bi-exp-offset','tri-exp-offset']
+                    names[n].append('offset')
+                    
+                elif [self.radioButton_time_offset_bidir_pos_3.isChecked(),self.radioButton_time_offset_bidir_min_2.isChecked()][n]==True:
+                    possible_fitfunc=[self.global_fit_bidir_2d.offset(times[n],n),
+                                      self.global_fit_bidir_2d.offset(times[n],n),
+                                      self.global_fit_bidir_2d.offset(times[n],n)]
+                    names[n].append('offset')
+                    self.global_decays_bidir[n].append(possible_fitfunc[model])
+            else:
+                possible_fitfunc=[self.global_fit_bidir_2d.mono_exp_parallel(times[n],n),
+                                             self.global_fit_bidir_2d.bi_exp_parallel_pop(times[n],n),
+                                             self.global_fit_bidir_2d.tri_exp_parallel_pop(times[n],n)]
+                self.global_decays_bidir[n]=possible_fitfunc[:model+1]
+                names_t=['mono-exp','bi-exp','tri-exp']
+                names[n]=names_t[:model+1]
+                if [self.radioButton_no_offset_bidir_pos_3.isChecked(),self.radioButton_no_offset_bidir_min_2.isChecked()][n]==False:
+                    names[n].append('offset')
+                    self.global_decays_bidir[n].append(self.global_fit_bidir_2d.offset(times[n],n))
         #make summed decay
         summed_decay=np.zeros(self.global_time_bidir.shape)
         styles=[QtCore.Qt.SolidLine,QtCore.Qt.DashLine]     
@@ -3504,7 +3139,7 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                                                   np.max(self.global_DAS_bidir[j][i])*decay,
                                                   pen=pg.mkPen(self.colors[i],width=2,style=styles[j]),name=names[j][i])
                 summed_decay+=np.max(self.global_DAS_bidir[j][i])*decay
-        #plotting the summe decay
+        #plotting the summed decay
         self.viewer_DAS_decays_bidir.plot(self.global_time_bidir_fitted,summed_decay,pen=pg.mkPen((0,0,0),width=2))
         
                 

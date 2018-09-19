@@ -118,7 +118,24 @@ class fits_bidir_2d(object):
     def tri_exp_decay_with_offset_final(self,t,n):
         return self.tri_exp_decay(t,n)+self.tri_exp_decay_final_state_pop(t,n)
     
-    def fit_function(self,Ptot,what_Ptots,function_pos,function_min,tfit,Yfit,floating_t0=False):
+    def mono_exp_parallel(self,t,n):
+        return self.special_erf(t,self.tau1[n],self.fwhm)
+    def mono_exp_parallel_offset(self,t,n):
+        return self.special_erf(t,self.tau1[n],self.fwhm)+self.offset(t,n)
+    def bi_exp_parallel(self,t,n):
+        return self.special_erf(t,self.tau1[n],self.fwhm)+self.special_erf(t,self.tau2[n],self.fwhm)
+    def bi_exp_parallel_offset(self,t,n):
+        return self.special_erf(t,self.tau1[n],self.fwhm)+self.special_erf(t,self.tau2[n],self.fwhm)+self.offset(t,n)
+    def tri_exp_parallel(self,t,n):
+        return self.special_erf(t,self.tau1[n],self.fwhm)+self.special_erf(t,self.tau2[n],self.fwhm)+self.special_erf(t,self.tau3[n],self.fwhm)
+    def tri_exp_parallel_offset(self,t,n):
+        return self.special_erf(t,self.tau1[n],self.fwhm)+self.special_erf(t,self.tau2[n],self.fwhm)+self.special_erf(t,self.tau3[n],self.fwhm)+self.offset(t,n)
+    def bi_exp_parallel_pop(self,t,n):
+        return self.special_erf(t,self.tau2[n],self.fwhm)
+    def tri_exp_parallel_pop(self,t,n):
+        return self.special_erf(t,self.tau3[n],self.fwhm)
+    
+    def fit_function(self,Ptot,what_Ptots,function_pos,function_min,tfit,Yfit,floating_t0=False,parallel_pos=False,parallel_min=False):
         '''
         Fit function (leastsq fit) with which the exp. values are fitted.
         Ptot: values to fit
@@ -145,10 +162,10 @@ class fits_bidir_2d(object):
                 t=tfit[k]       
                 Maxcalls=10000
             y=Yfit[k]
-            Ptot_interm,Ptot_interm_what=self.get_Ptot_interm(function_pos,function_min,k,floating_t0)
+            Ptot_interm,Ptot_interm_what=self.get_Ptot_interm(function_pos,function_min,k,floating_t0,parallel_pos,parallel_min)
             plsq,cov=leastsq(self.interm_fit.fit_function,Ptot_interm,
                   args=(Ptot_interm_what,function_pos,function_min,t,y,floating_t0),full_output=False,maxfev=Maxcalls)
-            self.reset_sigmas(plsq,Ptot_interm_what,k,floating_t0)
+            self.reset_sigmas(plsq,Ptot_interm_what,k,floating_t0,parallel_pos,parallel_min)
             Ypos=function_pos(t,0)
             Ymin=function_min(-t,1)
             return_roots.append(np.sqrt(np.power(Ypos+Ymin+self.moy[k]-Yfit[k],2)))
@@ -161,29 +178,49 @@ class fits_bidir_2d(object):
             self.reporter.append(np.sum(start))
             print(len(self.reporter))
             return start
-    def get_Ptot_interm(self, function_pos,function_min,k,floating_t0):
+    def get_Ptot_interm(self, function_pos,function_min,k,floating_t0,parallel_pos,parallel_min):
         which=['_pos','_min']
         Ptot_interm=[]
         Ptot_interm_what=[]
         for n,function in enumerate([str(function_pos),str(function_min)]):
-            if 'mono_exp_decay' in function:
-                Ptot_interm.append(np.abs(self.sigma_1[n][k]))
-                Ptot_interm_what.append('sigma_1'+which[n])
-            elif 'bi_exp_decay' in function:
-                Ptot_interm.append(np.abs(self.sigma_1[n][k]))
-                Ptot_interm_what.append('sigma_1'+which[n])
-                Ptot_interm.append(np.abs(self.sigma_2[n][k]))
-                Ptot_interm_what.append('sigma_2'+which[n])
-            elif 'tri_exp_decay' in function:
-                Ptot_interm.append(np.abs(self.sigma_1[n][k]))
-                Ptot_interm_what.append('sigma_1'+which[n])
-                Ptot_interm.append(np.abs(self.sigma_2[n][k]))
-                Ptot_interm_what.append('sigma_2'+which[n])
-                Ptot_interm.append(np.abs(self.sigma_3[n][k]))
-                Ptot_interm_what.append('sigma_3'+which[n])
-            if 'offset' in function:
-                Ptot_interm.append(np.abs(self.sigma_offset[n][k]))
-                Ptot_interm_what.append('sigma_offset'+which[n])
+            if [parallel_pos,parallel_min][n]==False:
+                if 'mono_exp' in function:
+                    Ptot_interm.append(np.abs(self.sigma_1[n][k]))
+                    Ptot_interm_what.append('sigma_1'+which[n])
+                elif 'bi_exp' in function:
+                    Ptot_interm.append(np.abs(self.sigma_1[n][k]))
+                    Ptot_interm_what.append('sigma_1'+which[n])
+                    Ptot_interm.append(np.abs(self.sigma_2[n][k]))
+                    Ptot_interm_what.append('sigma_2'+which[n])
+                elif 'tri_exp' in function:
+                    Ptot_interm.append(np.abs(self.sigma_1[n][k]))
+                    Ptot_interm_what.append('sigma_1'+which[n])
+                    Ptot_interm.append(np.abs(self.sigma_2[n][k]))
+                    Ptot_interm_what.append('sigma_2'+which[n])
+                    Ptot_interm.append(np.abs(self.sigma_3[n][k]))
+                    Ptot_interm_what.append('sigma_3'+which[n])
+                if 'offset' in function:
+                    Ptot_interm.append(np.abs(self.sigma_offset[n][k]))
+                    Ptot_interm_what.append('sigma_offset'+which[n])
+            else:
+                if 'mono_exp' in function:
+                    Ptot_interm.append(self.sigma_1[n][k])
+                    Ptot_interm_what.append('sigma_1'+which[n])
+                elif 'bi_exp' in function:
+                    Ptot_interm.append(self.sigma_1[n][k])
+                    Ptot_interm_what.append('sigma_1'+which[n])
+                    Ptot_interm.append(self.sigma_2[n][k])
+                    Ptot_interm_what.append('sigma_2'+which[n])
+                elif 'tri_exp' in function:
+                    Ptot_interm.append(self.sigma_1[n][k])
+                    Ptot_interm_what.append('sigma_1'+which[n])
+                    Ptot_interm.append(self.sigma_2[n][k])
+                    Ptot_interm_what.append('sigma_2'+which[n])
+                    Ptot_interm.append(self.sigma_3[n][k])
+                    Ptot_interm_what.append('sigma_3'+which[n])
+                if 'offset' in function:
+                    Ptot_interm.append(self.sigma_offset[n][k])
+                    Ptot_interm_what.append('sigma_offset'+which[n])
         if floating_t0==True:
             Ptot_interm.append(self.time_offset[k])
             Ptot_interm_what.append('time_offset')
@@ -191,29 +228,54 @@ class fits_bidir_2d(object):
             self.interm_fit.time_offset=self.time_offset[0]
         return Ptot_interm, Ptot_interm_what
 
-    def reset_sigmas(self,plsq,Ptot_interm_what,k,floating_t0):
+    def reset_sigmas(self,plsq,Ptot_interm_what,k,floating_t0,parallel_pos,parallel_min):
 
         for n in range(len(Ptot_interm_what)):
             if 'sigma_offset' in Ptot_interm_what[n]:
                 if '_pos' in Ptot_interm_what[n]:
-                    self.sigma_offset[0][k]=np.abs(plsq[n])
+                    if parallel_pos==False:
+                        self.sigma_offset[0][k]=np.abs(plsq[n])
+                    else:
+                        self.sigma_offset[0][k]=plsq[n]
                 elif '_min' in Ptot_interm_what[n]:
-                    self.sigma_offset[1][k]=np.abs(plsq[n])
+                    if parallel_min==False:
+                        self.sigma_offset[1][k]=np.abs(plsq[n])
+                    else:
+                        self.sigma_offset[1][k]=plsq[n]
             if'sigma_1' in  Ptot_interm_what[n]:
                 if '_pos' in Ptot_interm_what[n]:
-                    self.sigma_1[0][k]=np.abs(plsq[n])
+                    if parallel_pos==False:
+                        self.sigma_1[0][k]=np.abs(plsq[n])
+                    else:
+                        self.sigma_1[0][k]=plsq[n]
                 elif '_min' in Ptot_interm_what[n]:
-                    self.sigma_1[1][k]=np.abs(plsq[n])
+                    if parallel_min==False:
+                        self.sigma_1[1][k]=np.abs(plsq[n])
+                    else:
+                        self.sigma_1[1][k]=plsq[n]
             if 'sigma_2' in Ptot_interm_what[n]:
                 if '_pos' in Ptot_interm_what[n]:
-                    self.sigma_2[0][k]=np.abs(plsq[n])
+                    if parallel_pos==False:
+                        self.sigma_2[0][k]=np.abs(plsq[n])
+                    else:
+                        self.sigma_2[0][k]=plsq[n]
                 elif '_min' in Ptot_interm_what[n]:
-                    self.sigma_2[1][k]=np.abs(plsq[n])
+                    if parallel_min==False:
+                        self.sigma_2[1][k]=np.abs(plsq[n])
+                    else:
+                        self.sigma_2[1][k]=plsq[n]
             if 'sigma_3' in Ptot_interm_what[n]:
                 if '_pos' in Ptot_interm_what[n]:
-                    self.sigma_3[0][k]=np.abs(plsq[n])
+                    if parallel_pos==False:
+                        self.sigma_3[0][k]=np.abs(plsq[n])
+                    else:
+                        self.sigma_3[0][k]=plsq[n]
                 elif '_min' in Ptot_interm_what[n]:
-                    self.sigma_3[1][k]=np.abs(plsq[n])
+                    if parallel_min==False:
+                        self.sigma_3[1][k]=np.abs(plsq[n])
+                    else:
+                        self.sigma_3[1][k]=plsq[n]
+
         if floating_t0==True:
             self.time_offset[k]=plsq[-1]
 
@@ -299,7 +361,7 @@ class fits_bidir_2d(object):
         sigma=self.fwhm_to_sigma(self.fwhm[n])
         return self.sigma_1[n]*1/(sigma*np.sqrt(2*np.pi))*np.exp(-((t-self.time_offset)**2)/(2*(sigma)**2))+self.offset(t,n)
      
-    def extract_Deltas_plsqs(self,plsq,cov,whatPtots,function_pos,function_min,tfit,Yfit):
+    def extract_Deltas_plsqs(self,plsq,cov,whatPtots,function_pos,function_min,tfit,Yfit,floating_t0,parallel_pos,parallel_min):
         '''
         This subfunctions serves as to extract the incertitudes
         out of the optimized functions
@@ -311,7 +373,7 @@ class fits_bidir_2d(object):
         if len(plsq)!=len(whatPtots):
             print ('the lengths of plsq and WhatPtots should be the same!!')
         #get residual
-        Yres=self.fit_function(plsq,whatPtots,function_pos,function_min,tfit,Yfit)
+        Yres=self.fit_function(plsq,whatPtots,function_pos,function_min,tfit,Yfit,floating_t0,parallel_pos,parallel_min)
         res=np.sqrt(np.power(Yres,2).sum()/Yres.size)
         plsqs=[]
         Deltas=[]

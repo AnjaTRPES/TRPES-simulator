@@ -116,6 +116,23 @@ class fits_bidir(object):
         return a+b
     def tri_exp_decay_with_offset_final(self,t,n):
         return self.tri_exp_decay(t,n)+self.tri_exp_decay_final_state_pop(t,n)
+     
+    def mono_exp_parallel(self,t,n):
+        return self.sigma_1[n]*self.special_erf(t,self.tau1[n],self.fwhm)
+    def mono_exp_parallel_offset(self,t,n):
+        return self.sigma_1[n]*self.special_erf(t,self.tau1[n],self.fwhm)+self.offset(t,n)
+    def bi_exp_parallel(self,t,n):
+        return self.sigma_1[n]*self.special_erf(t,self.tau1[n],self.fwhm)+self.sigma_2[n]*self.special_erf(t,self.tau2[n],self.fwhm)
+    def bi_exp_parallel_offset(self,t,n):
+        return self.sigma_1[n]*self.special_erf(t,self.tau1[n],self.fwhm)+self.sigma_2[n]*self.special_erf(t,self.tau2[n],self.fwhm)+self.offset(t,n)
+    def tri_exp_parallel(self,t,n):
+        return self.sigma_1[n]*self.special_erf(t,self.tau1[n],self.fwhm)+self.sigma_2[n]*self.special_erf(t,self.tau2[n],self.fwhm)+self.sigma_3[n]*self.special_erf(t,self.tau3[n],self.fwhm)
+    def tri_exp_parallel_offset(self,t,n):
+        return self.sigma_1[n]*self.special_erf(t,self.tau1[n],self.fwhm)+self.sigma_2[n]*self.special_erf(t,self.tau2[n],self.fwhm)+self.sigma_3[n]*self.special_erf(t,self.tau3[n],self.fwhm)+self.offset(t,n)
+    def bi_exp_parallel_pop(self,t,n):
+        return self.sigma_2[n]*self.special_erf(t,self.tau2[n],self.fwhm)
+    def tri_exp_parallel_pop(self,t,n):
+        return self.sigma_3[n]*self.special_erf(t,self.tau3[n],self.fwhm)
     
     def fit_function(self,Ptot,what_Ptots,function_pos,function_min,tfit,Yfit,floating_t0=False):
         '''

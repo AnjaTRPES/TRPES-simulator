@@ -165,6 +165,57 @@ class fits(object):
     def tri_exp_decay_with_offset_final(self,t,n,several_fwhms=False):
         return self.tri_exp_decay(t,n,several_fwhms)+self.tri_exp_decay_final_state_pop(t,n,several_fwhms)
     
+    
+    def mono_exp_parallel(self,t,n,several_fwhms=False):
+        if several_fwhms==False:
+            fwhm=self.fwhm[0]
+        else:
+            fwhm=self.fwhm[n]
+        return self.sigma_1[n]*self.special_erf(t,self.tau1,fwhm)
+    def mono_exp_parallel_offset(self,t,n,several_fwhms=False):
+        if several_fwhms==False:
+            fwhm=self.fwhm[0]
+        else:
+            fwhm=self.fwhm[n]
+        return self.sigma_1[n]*self.special_erf(t,self.tau1,fwhm)+self.offset(t,n)
+    def bi_exp_parallel(self,t,n,several_fwhms=False):
+        if several_fwhms==False:
+            fwhm=self.fwhm[0]
+        else:
+            fwhm=self.fwhm[n]
+        return self.sigma_1[n]*self.special_erf(t,self.tau1,fwhm)+self.sigma_2[n]*self.special_erf(t,self.tau2,fwhm)
+    def bi_exp_parallel_offset(self,t,n,several_fwhms=False):
+        if several_fwhms==False:
+            fwhm=self.fwhm[0]
+        else:
+            fwhm=self.fwhm[n]
+        return self.sigma_1[n]*self.special_erf(t,self.tau1,fwhm)+self.sigma_2[n]*self.special_erf(t,self.tau2,fwhm)+self.offset(t,n)
+    def tri_exp_parallel(self,t,n,several_fwhms=False):
+        if several_fwhms==False:
+            fwhm=self.fwhm[0]
+        else:
+            fwhm=self.fwhm[n]
+        return self.sigma_1[n]*self.special_erf(t,self.tau1,fwhm)+self.sigma_2[n]*self.special_erf(t,self.tau2,fwhm)+self.sigma_3[n]*self.special_erf(t,self.tau3,fwhm)
+    def tri_exp_parallel_offset(self,t,n,several_fwhms=False):
+        if several_fwhms==False:
+            fwhm=self.fwhm[0]
+        else:
+            fwhm=self.fwhm[n]
+        return self.sigma_1[n]*self.special_erf(t,self.tau1,fwhm)+self.sigma_2[n]*self.special_erf(t,self.tau2,fwhm)+self.sigma_3[n]*self.special_erf(t,self.tau3,fwhm)+self.offset(t,n)
+    def bi_exp_parallel_pop(self,t,n,several_fwhms=False):
+        if several_fwhms==False:
+            fwhm=self.fwhm[0]
+        else:
+            fwhm=self.fwhm[n]
+        return self.sigma_2[n]*self.special_erf(t,self.tau2,fwhm)
+    def tri_exp_parallel_pop(self,t,n,several_fwhms=False):
+        if several_fwhms==False:
+            fwhm=self.fwhm[0]
+        else:
+            fwhm=self.fwhm[n]
+        return self.sigma_3[n]*self.special_erf(t,self.tau3,fwhm)
+    
+    
     def fit_function(self,Ptot,what_Ptots,function,tfit,Yfit,several_fwhms=False):
         '''
         Fit function (leastsq fit) with which the exp. values are fitted.

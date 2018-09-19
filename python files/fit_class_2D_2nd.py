@@ -167,8 +167,57 @@ class fits_2D_2nd(object):
         return a+b
     def tri_exp_decay_with_offset_final(self,t,n,several_fwhms=False):
         return self.tri_exp_decay(t,n,several_fwhms)+self.tri_exp_decay_final_state_pop(t,n,several_fwhms)
+         
+    def mono_exp_parallel(self,t,n,several_fwhms=False):
+        if several_fwhms==False:
+            fwhm=self.fwhm[0]
+        else:
+            fwhm=self.fwhm[n]
+        return self.sigma_1[n]*self.special_erf(t,self.tau1,fwhm)
+    def mono_exp_parallel_offset(self,t,n,several_fwhms=False):
+        if several_fwhms==False:
+            fwhm=self.fwhm[0]
+        else:
+            fwhm=self.fwhm[n]
+        return self.sigma_1[n]*self.special_erf(t,self.tau1,fwhm)+self.offset(t,n)
+    def bi_exp_parallel(self,t,n,several_fwhms=False):
+        if several_fwhms==False:
+            fwhm=self.fwhm[0]
+        else:
+            fwhm=self.fwhm[n]
+        return self.sigma_1[n]*self.special_erf(t,self.tau1,fwhm)+self.sigma_2[n]*self.special_erf(t,self.tau2,fwhm)
+    def bi_exp_parallel_offset(self,t,n,several_fwhms=False):
+        if several_fwhms==False:
+            fwhm=self.fwhm[0]
+        else:
+            fwhm=self.fwhm[n]
+        return self.sigma_1[n]*self.special_erf(t,self.tau1,fwhm)+self.sigma_2[n]*self.special_erf(t,self.tau2,fwhm)+self.offset(t,n)
+    def tri_exp_parallel(self,t,n,several_fwhms=False):
+        if several_fwhms==False:
+            fwhm=self.fwhm[0]
+        else:
+            fwhm=self.fwhm[n]
+        return self.sigma_1[n]*self.special_erf(t,self.tau1,fwhm)+self.sigma_2[n]*self.special_erf(t,self.tau2,fwhm)+self.sigma_3[n]*self.special_erf(t,self.tau3,fwhm)
+    def tri_exp_parallel_offset(self,t,n,several_fwhms=False):
+        if several_fwhms==False:
+            fwhm=self.fwhm[0]
+        else:
+            fwhm=self.fwhm[n]
+        return self.sigma_1[n]*self.special_erf(t,self.tau1,fwhm)+self.sigma_2[n]*self.special_erf(t,self.tau2,fwhm)+self.sigma_3[n]*self.special_erf(t,self.tau3,fwhm)+self.offset(t,n)
+    def bi_exp_parallel_pop(self,t,n,several_fwhms=False):
+        if several_fwhms==False:
+            fwhm=self.fwhm[0]
+        else:
+            fwhm=self.fwhm[n]
+        return self.sigma_2[n]*self.special_erf(t,self.tau2,fwhm)
+    def tri_exp_parallel_pop(self,t,n,several_fwhms=False):
+        if several_fwhms==False:
+            fwhm=self.fwhm[0]
+        else:
+            fwhm=self.fwhm[n]
+        return self.sigma_3[n]*self.special_erf(t,self.tau3,fwhm)
     
-    def fit_function(self,Ptot,what_Ptots,function,tfit,Yfit,interm_fct,interm_fct_what,floating_t0=False,several_fwhms=False):
+    def fit_function(self,Ptot,what_Ptots,function,tfit,Yfit,interm_fct,interm_fct_what,floating_t0=False,parallel=False,several_fwhms=False):
         '''
         Fit function (leastsq fit) with which the exp. values are fitted.
         Ptot: values to fit
@@ -197,10 +246,10 @@ class fits_2D_2nd(object):
                 t=tfit[n]
             y=Yfit[n]
             #fitting the sigma parameters to the current selected tau parameters
-            Ptot_interm,Ptot_interm_what=self.get_Ptot_interm(interm_fct_what,n,floating_t0)
+            Ptot_interm,Ptot_interm_what=self.get_Ptot_interm(interm_fct_what,n,floating_t0,parallel)
             plsq,cov,info,msg,ier=leastsq(self.interm_fit.fit_function,Ptot_interm,
                               args=(Ptot_interm_what,interm_fct,[t],[y],floating_t0),full_output=True)
-            self.reset_sigmas(plsq,interm_fct_what,n,floating_t0)
+            self.reset_sigmas(plsq,interm_fct_what,n,floating_t0,parallel)
             #attributing the parameters
             return_roots.append(np.sqrt(np.power(interm_fct(t,0)+self.moy[n]-Yfit[n],2)))
         if len(return_roots)==1:
@@ -213,7 +262,7 @@ class fits_2D_2nd(object):
             print('error',self.reporter[-1])
             return start
         
-    def get_Ptot_interm(self,function,n,floating_t0):
+    def get_Ptot_interm(self,function,n,floating_t0,parallel):
         self.interm_fit.moy=[self.moy[n]]
         Ptot_interm=[]
         Ptot_interm_what=[]
@@ -221,55 +270,101 @@ class fits_2D_2nd(object):
             self.interm_fit.time_offset=[self.time_offset[n]]
             Ptot_interm.append(self.time_offset[n])
             Ptot_interm_what.append('time_offset')
-        if 'mono_exp_decay' in function:
-            self.interm_fit.sigma_1=[np.abs(self.sigma_1[n])]
-            Ptot_interm.append(np.abs(self.sigma_1[n]))
-            Ptot_interm_what.append('sigma_1')            
-        elif 'bi_exp_decay' in function:
-            self.interm_fit.sigma_1=[np.abs(self.sigma_1[n])]
-            self.interm_fit.sigma_2=[np.abs(self.sigma_2[n])]
-            Ptot_interm.append(np.abs(self.sigma_1[n]))
-            Ptot_interm.append(np.abs(self.sigma_2[n]))
-            Ptot_interm_what.append('sigma_1')
-            Ptot_interm_what.append('sigma_2')
-        elif 'tri_exp_decay' in function:
-            self.interm_fit.sigma_1=[np.abs(self.sigma_1[n])]
-            self.interm_fit.sigma_2=[np.abs(self.sigma_2[n])]
-            self.interm_fit.sigma_2=[np.abs(self.sigma_3[n])]
-            Ptot_interm.append(np.abs(self.sigma_1[n]))
-            Ptot_interm.append(np.abs(self.sigma_2[n]))
-            Ptot_interm.append(np.abs(self.sigma_3[n]))
-            Ptot_interm_what.append('sigma_1')
-            Ptot_interm_what.append('sigma_2')
-            Ptot_interm_what.append('sigma_3')               
-        if 'offset' in function:
-            self.interm_fit.sigma_offset=[np.abs(self.sigma_offset[n])]
-            Ptot_interm.append(np.abs(self.sigma_offset[n]))
-            Ptot_interm_what.append('sigma_offset')    
-        if 'fct_auto_corr' in function:
-            self.interm_fit.sigma_1=[np.abs(self.sigma_1[n])]
-            Ptot_interm.append(np.abs(self.sigma_1[n]))
-            Ptot_interm_what.append('sigma_1')   
+        if parallel==False:
+            if 'mono_exp_decay' in function:
+                self.interm_fit.sigma_1=[np.abs(self.sigma_1[n])]
+                Ptot_interm.append(np.abs(self.sigma_1[n]))
+                Ptot_interm_what.append('sigma_1')            
+            elif 'bi_exp_decay' in function:
+                self.interm_fit.sigma_1=[np.abs(self.sigma_1[n])]
+                self.interm_fit.sigma_2=[np.abs(self.sigma_2[n])]
+                Ptot_interm.append(np.abs(self.sigma_1[n]))
+                Ptot_interm.append(np.abs(self.sigma_2[n]))
+                Ptot_interm_what.append('sigma_1')
+                Ptot_interm_what.append('sigma_2')
+            elif 'tri_exp_decay' in function:
+                self.interm_fit.sigma_1=[np.abs(self.sigma_1[n])]
+                self.interm_fit.sigma_2=[np.abs(self.sigma_2[n])]
+                self.interm_fit.sigma_2=[np.abs(self.sigma_3[n])]
+                Ptot_interm.append(np.abs(self.sigma_1[n]))
+                Ptot_interm.append(np.abs(self.sigma_2[n]))
+                Ptot_interm.append(np.abs(self.sigma_3[n]))
+                Ptot_interm_what.append('sigma_1')
+                Ptot_interm_what.append('sigma_2')
+                Ptot_interm_what.append('sigma_3')               
+            if 'offset' in function:
+                self.interm_fit.sigma_offset=[np.abs(self.sigma_offset[n])]
+                Ptot_interm.append(np.abs(self.sigma_offset[n]))
+                Ptot_interm_what.append('sigma_offset')    
+            if 'fct_auto_corr' in function:
+                self.interm_fit.sigma_1=[np.abs(self.sigma_1[n])]
+                Ptot_interm.append(np.abs(self.sigma_1[n]))
+                Ptot_interm_what.append('sigma_1') 
+        else:
+            if 'mono_exp_decay' in function:
+                self.interm_fit.sigma_1=[self.sigma_1[n]]
+                Ptot_interm.append(self.sigma_1[n])
+                Ptot_interm_what.append('sigma_1')            
+            elif 'bi_exp_decay' in function:
+                self.interm_fit.sigma_1=[self.sigma_1[n]]
+                self.interm_fit.sigma_2=[self.sigma_2[n]]
+                Ptot_interm.append(self.sigma_1[n])
+                Ptot_interm.append(self.sigma_2[n])
+                Ptot_interm_what.append('sigma_1')
+                Ptot_interm_what.append('sigma_2')
+            elif 'tri_exp_decay' in function:
+                self.interm_fit.sigma_1=[self.sigma_1[n]]
+                self.interm_fit.sigma_2=[self.sigma_2[n]]
+                self.interm_fit.sigma_2=[self.sigma_3[n]]
+                Ptot_interm.append(self.sigma_1[n])
+                Ptot_interm.append(self.sigma_2[n])
+                Ptot_interm.append(self.sigma_3[n])
+                Ptot_interm_what.append('sigma_1')
+                Ptot_interm_what.append('sigma_2')
+                Ptot_interm_what.append('sigma_3')               
+            if 'offset' in function:
+                self.interm_fit.sigma_offset=[self.sigma_offset[n]]
+                Ptot_interm.append(self.sigma_offset[n])
+                Ptot_interm_what.append('sigma_offset')    
+            if 'fct_auto_corr' in function:
+                self.interm_fit.sigma_1=[self.sigma_1[n]]
+                Ptot_interm.append(self.sigma_1[n])
+                Ptot_interm_what.append('sigma_1') 
         return Ptot_interm,Ptot_interm_what
         
-    def reset_sigmas(self,ptots_interm,function,n,floating_t0):
+    def reset_sigmas(self,ptots_interm,function,n,floating_t0,parallel):
         g=0
         if floating_t0==True:
             self.time_offset[n]=ptots_interm[0]
             g+=1
-        if 'mono_exp_decay' in function:
-            self.sigma_1[n]=np.abs(ptots_interm[g])
-        elif 'bi_exp_decay' in function:
-            self.sigma_1[n]=np.abs(ptots_interm[g])
-            self.sigma_2[n]=np.abs(ptots_interm[g+1])
-        elif 'tri_exp_decay' in function:
-            self.sigma_1[n]=np.abs(ptots_interm[g])
-            self.sigma_2[n]=np.abs(ptots_interm[g+1])
-            self.sigma_3[n]=np.abs(ptots_interm[g+3])
-        if 'offset' in function:
-            self.sigma_offset[n]=np.abs(ptots_interm[-1])
-        if 'fct_auto_corr' in function:
-            self.sigma_1[n]=np.abs(ptots_interm[g])
+        if parallel==False:
+            if 'mono_exp_decay' in function:
+                self.sigma_1[n]=np.abs(ptots_interm[g])
+            elif 'bi_exp_decay' in function:
+                self.sigma_1[n]=np.abs(ptots_interm[g])
+                self.sigma_2[n]=np.abs(ptots_interm[g+1])
+            elif 'tri_exp_decay' in function:
+                self.sigma_1[n]=np.abs(ptots_interm[g])
+                self.sigma_2[n]=np.abs(ptots_interm[g+1])
+                self.sigma_3[n]=np.abs(ptots_interm[g+2])
+            if 'offset' in function:
+                self.sigma_offset[n]=np.abs(ptots_interm[-1])
+            if 'fct_auto_corr' in function:
+                self.sigma_1[n]=np.abs(ptots_interm[g])
+        else:
+            if 'mono_exp_decay' in function:
+                self.sigma_1[n]=ptots_interm[g]
+            elif 'bi_exp_decay' in function:
+                self.sigma_1[n]=ptots_interm[g]
+                self.sigma_2[n]=ptots_interm[g+1]
+            elif 'tri_exp_decay' in function:
+                self.sigma_1[n]=ptots_interm[g]
+                self.sigma_2[n]=ptots_interm[g+1]
+                self.sigma_3[n]=ptots_interm[g+2]
+            if 'offset' in function:
+                self.sigma_offset[n]=ptots_interm[-1]
+            if 'fct_auto_corr' in function:
+                self.sigma_1[n]=ptots_interm[g]
     
     def ptot_function(self,Ptot,whatPtots):
         '''
@@ -359,7 +454,7 @@ class fits_2D_2nd(object):
         sigma=self.fwhm_to_sigma(self.fwhm[n])
         return 1/(sigma*np.sqrt(2*np.pi))*np.exp(-((t)**2)/(2*(sigma)**2))+self.offset(t,n)
      
-    def extract_Deltas_plsqs(self,plsq,cov,whatPtots,function,tfit,Yfit,interm_fct,interm_fct_what,several_fwhms=False):
+    def extract_Deltas_plsqs(self,plsq,cov,whatPtots,function,tfit,Yfit,interm_fct,interm_fct_what,parallel=False,several_fwhms=False):
         '''
         This subfunctions serves as to extract the incertitudes
         out of the optimized functions
@@ -371,7 +466,7 @@ class fits_2D_2nd(object):
         if len(plsq)!=len(whatPtots):
             print ('the lengths of plsq and WhatPtots should be the same!!')
         #get residual
-        Yres=self.fit_function(plsq,whatPtots,function,tfit,Yfit,interm_fct,interm_fct_what)
+        Yres=self.fit_function(plsq,whatPtots,function,tfit,Yfit,interm_fct,interm_fct_what,parallel=parallel)
         res=np.sqrt(np.power(Yres,2).sum()/Yres.size)
         plsqs=[]
         Deltas=[]
