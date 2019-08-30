@@ -134,7 +134,8 @@ class fits_bidir(object):
     def tri_exp_parallel_pop(self,t,n):
         return self.sigma_3[n]*self.special_erf(t,self.tau3[n],self.fwhm)
     
-    def fit_function(self,Ptot,what_Ptots,function_pos,function_min,tfit,Yfit,floating_t0=False):
+    def fit_function(self,Ptot,what_Ptots,function_pos,function_min,
+                     tfit,Yfit,floating_t0=False,sigmas=None):
         '''
         Fit function (leastsq fit) with which the exp. values are fitted.
         Ptot: values to fit
@@ -144,6 +145,7 @@ class fits_bidir(object):
         tfit=exp times
         Yfit: exp. Signals
         '''
+        #print('teeeesting')
         #print 'fitting %i functions',len(tfit)
         self.ptot_function(Ptot,what_Ptots)
         return_roots=[]
@@ -155,7 +157,15 @@ class fits_bidir(object):
         Ymin=function_min(-t,1)
         Y=Ypos+Ymin
         self.reporter+=1
-        return_roots=np.sqrt(np.power(Y+self.moy-Yfit,2))
+        #print('zea')
+        #sigmas=np.array(sigmas)
+        #print('shapes', sigmas.shape,Y.shape)
+        #print(type(None),type(sigmas))
+        #print(type(sigmas)==type(None))
+        if type(sigmas)==type(None):
+            return_roots=np.sqrt(np.power(Y+self.moy-Yfit,2))
+        else:
+            return_roots=np.sqrt(np.power(np.divide(Y+self.moy-Yfit,sigmas),2))
         return return_roots
 
 
@@ -230,7 +240,7 @@ class fits_bidir(object):
         sigma=self.fwhm_to_sigma(self.fwhm[n])
         return self.sigma_1[n]*1/(sigma*np.sqrt(2*np.pi))*np.exp(-((t-self.time_offset)**2)/(2*(sigma)**2))+self.offset(t,n)
      
-    def extract_Deltas_plsqs(self,plsq,cov,whatPtots,function_pos,function_min,tfit,Yfit):
+    def extract_Deltas_plsqs(self,plsq,cov,whatPtots,function_pos,function_min,tfit,Yfit,sigmas):
         '''
         This subfunctions serves as to extract the incertitudes
         out of the optimized functions
@@ -242,7 +252,7 @@ class fits_bidir(object):
         if len(plsq)!=len(whatPtots):
             print ('the lengths of plsq and WhatPtots should be the same!!')
         #get residual
-        Yres=self.fit_function(plsq,whatPtots,function_pos,function_min,tfit,Yfit)
+        Yres=self.fit_function(plsq,whatPtots,function_pos,function_min,tfit,Yfit,sigmas=sigmas)
         res=np.sqrt(np.power(Yres,2).sum()/Yres.size)
         plsqs=[]
         Deltas=[]

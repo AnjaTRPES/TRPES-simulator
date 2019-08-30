@@ -123,7 +123,13 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         self.global_TRPES_dataset=None
         self.global_time_dataset=None
         self.global_eV_dataset=None
+        self.global_TRPES_sigmas=None
+        self.global_DAS_deltas=None
+        self.global_TRPES_sliced_for_new_dataset=None
+        self.global_TRPES_time_inverted=False
+        self.global_TRPES_subtract_bg_limits=None
         #all variables global analysis bidir
+        self.global_TRPES_bidir_sliced_for_new_dataset=None
         self.global_TRPES_bidir=None
         self.global_time_bidir=None
         self.global_eV_bidir=None
@@ -142,6 +148,8 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         self.global_TRPES_bidir_dataset=None
         self.global_time_bidir_dataset=None
         self.global_eV_bidir_dataset=None
+        self.global_TRPES_bidir_sigmas=None
+        self.global_TRPES_bidir_subtract_bg_limits=None
         
 
     @pyqtSlot()
@@ -1004,7 +1012,7 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         t=data[1:,0]
         eV=data[0,1:]
         print(t[0],eV[0])
-        z=data[1:,1:]/data[1:,1:].max()
+        z=data[1:,1:]
         if t[0]>t[-1]:
             z=np.flip(z,axis=0)
             t=np.flip(t,axis=0)
@@ -1531,13 +1539,16 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         self.global_TRPES_dataset=self.global_TRPES
         self.global_time_dataset=self.global_time
         self.global_eV_dataset=self.global_eV
+        self_global_TRPES_sigmas=None
         
     @pyqtSlot()
     def on_pushButton_get_reconstructed_TRPES_clicked(self):
         '''
         get the reconstructed TRPES from the SVD tab
         '''
+        print('clicked get the reconstructed one!')
         if type(self.SVD_reconstructed)!=type(None):
+            print('yo')
             #all variables global analysis
             self.global_TRPES_original_for_bg=None
             self.global_TRPES=self.SVD_reconstructed
@@ -1549,7 +1560,6 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             self.comboBox_global_TRPES_which.setCurrentIndex(0)
             self.comboBox_global_TRPES_which.blockSignals(False)
             self.plot_TRPES(self.viewer_global_orig_TRPES,self.global_TRPES,self.global_time,self.global_eV)
-            self.viewer_global_pe_gauss_update()
             self.update_global_fit_parameters()
             self.viewer_global_time_guess_update()
             self.checkBox_global_subtract_background.setChecked(False)
@@ -1557,6 +1567,7 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             self.global_TRPES_dataset=self.global_TRPES
             self.global_time_dataset=self.global_time
             self.global_eV_dataset=self.global_eV
+            self_global_TRPES_sigmas=None
         
     @pyqtSlot()
     def on_pushButton_global_load_trpes_clicked(self):
@@ -1570,6 +1581,8 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             print('it loaded as a csv file')
             #load the data as a csv file
             self.global_time,self.global_eV,self.global_TRPES=self.load_csv(filename)
+            self.global_TRPES_z_max=self.global_TRPES.max()
+            self.global_TRPES=self.global_TRPES/self.global_TRPES_z_max
             self.comboBox_global_TRPES_which.blockSignals(True)
             self.comboBox_global_TRPES_which.clear()
             self.comboBox_global_TRPES_which.addItem('Original')
@@ -1583,6 +1596,7 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             self.global_TRPES_dataset=self.global_TRPES
             self.global_time_dataset=self.global_time
             self.global_eV_dataset=self.global_eV
+            self.global_TRPES_sigmas=None
         elif filename!='':
             #load my old data format
             loaded=np.loadtxt(filename,comments='# ')
@@ -1600,7 +1614,28 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             self.global_TRPES_dataset=self.global_TRPES
             self.global_time_dataset=self.global_time
             self.global_eV_dataset=self.global_eV
+            self.global_TRPES_sigmas=None
+    @pyqtSlot()
+    def on_pushButton_global_load_trpes_sigmas_clicked(self):
+        "load the sigmas, assuming they are also saved in a csv format"
+        #only if self.global_TRPES!=empty
+        if type(self.global_TRPES)!=type(None):
+            print('loading uncertainties')
+            filename = QFileDialog.getOpenFileName(self, 'Open File',self.dir)[0]
+            self.dir=filename[:(-len(filename.split('/')[-1]))]
+            if filename[-3:]=='csv':
+                print('it loaded as a csv file')
+                #load the data as a csv file
+                time,eV,sigmas=self.load_csv(filename)
+                sigmas=sigmas/self.global_TRPES_z_max
+                if sigmas.shape[0]==self.global_TRPES.shape[0] and self.global_TRPES.shape[1]==sigmas.shape[1]:
+                    self.global_TRPES_sigmas=sigmas
+                    print('added sigma',self.global_TRPES_sigmas.max(),self.global_TRPES_sigmas.min())
+                else:
+                    print('sigmas have a different shape than the loaded TRPES')
 
+
+        
     def initalize_spinboxes_new_dataset(self):
         #sets limits time for the currently loaded dataset
         min_value_time=self.global_time.min()
@@ -1647,6 +1682,7 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                 else:
                     time_max+=1
             self.global_TRPES_dataset=copy.deepcopy(self.global_TRPES[time_min:time_max+1,eV_min:eV_max+1])
+            self.global_TRPES_sliced_for_new_dataset=[time_min,time_max+1,eV_min,eV_max+1]
             self.global_time_dataset=copy.deepcopy(self.global_time[time_min:time_max+1])
             self.global_eV_dataset=copy.deepcopy(self.global_eV[eV_min:eV_max+1])
             #updating the combobox
@@ -1874,6 +1910,10 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
     @pyqtSlot()
     def on_pushButton_global_invert_time_axis_clicked(self):
         print('before',self.global_time)
+        if self.global_TRPES_time_inverted==False:
+            self.global_TRPES_time_inverted=True
+        else:
+            self.global_TRPES_time_inverted=False
         self.global_time=-np.flip(self.global_time,axis=0)
         self.global_time_dataset=-np.flip(self.global_time_dataset,axis=0)
         self.global_TRPES=np.flip(self.global_TRPES,axis=0)
@@ -1922,6 +1962,23 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                 print('color',self.colors[i])
                 self.viewer_DAS.plot(self.global_eV,curve.transpose()[:,0])
                 self.viewer_DAS.plot(self.global_eV,curve.transpose()[:,0],pen=pg.mkPen(self.colors[i],width=2),name=names[i])
+                #plot the uncertainties
+                #print('diagnostics',self.global_eV.shape)
+                #print(curve.transpose().shape)
+                #print(self.global_DAS_deltas[:,i].shape)
+                #errors=pg.ErrorBarItem(x=self.global_eV,y=curve.transpose()[:,0], height=curve.transpose()[:,0]/10, beam=0.5,
+                #    pen=pg.mkPen(self.colors[i],width=2),)
+                #print(type(curve.transpose()[:,0]),curve.transpose()[:,0])
+                #print(type(self.global_DAS_deltas[0,i]))
+                #print(type(curve.transpose()[0,0]))
+                #print(type(self.global_DAS_deltas[:,i]),self.global_DAS_deltas[:,i])
+                #errors=pg.ErrorBarItem(x=self.global_eV,y=curve.transpose()[:,0], height=self.global_DAS_deltas[:,i], beam=0.5,
+                #    pen=pg.mkPen(self.colors[i],width=2),)
+                item1=self.viewer_DAS.plot(self.global_eV,curve.transpose()[:,0]+self.global_DAS_deltas[:,i],brush=None,pen=(50,50,200,0))
+                item2=self.viewer_DAS.plot(self.global_eV,curve.transpose()[:,0]-self.global_DAS_deltas[:,i],brush=None,pen=(50,50,200,0))
+                errors=pg.FillBetweenItem(curve1=item1, curve2=item2, brush=(self.colors[i][0],self.colors[i][1],self.colors[i][2],100), pen=None)
+                self.viewer_DAS.addItem(errors)
+                
                 if np.max(curve)>=max2:
                     max2=np.max(curve)
                 if np.min(curve)<=min2:
@@ -1971,6 +2028,11 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         update the textBrowser_global_overview_results with the results
         '''
         text='Overview of the fitting results:\n'
+        text+='with'
+        if type(self.global_TRPES_sigmas)!=type(None):
+            text+=' experimental uncertainties incorporated\n'
+        else:
+            text+='out experimental uncertainties incorporated\n'
         text+='_________________________________\n'
         text+='Number of iterations ' +str(self.global_params_from_fit[1]['nfev'])+'\n'
         text+='_________________________________\n'
@@ -2044,11 +2106,12 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                 data[:,i*2+1]=decay
             np.savetxt(filename+'.decay',data,header=header)
             #save the DAS stuff            
-            data=np.zeros((self.global_eV_for_fit.shape[0],len(self.global_DAS_fitted)*2+1))
+            data=np.zeros((self.global_eV_for_fit.shape[0],len(self.global_DAS_fitted)*3+1))
             header='all DAS are saved in xy format\nthe last line corresponds to the time zeros of the xyz array\n'
             for i,DAS in enumerate(self.global_DAS_fitted):
                 data[:,i*2]=self.global_eV_for_fit
                 data[:,i*2+1]=DAS
+                data[:,i*3+1]=self.global_DAS_deltas[:,i]
             data[:,-1]=self.global_t0
             np.savetxt(filename+'.DAS',data)
             #save the text overview stuff
@@ -2081,11 +2144,13 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         if self.test_fit.reporter!=[]:
             self.viewer_optimization.clear()
             self.viewer_optimization.setLogMode(x=False,y=True)
-            x=range(0,len(self.test_fit.reporter))
+            x=list(range(0,len(self.test_fit.reporter)))
+            '''
             for i, val in enumerate(self.test_fit.reporter):
                 if val>10E4:
                     del self.test_fit.reporter[i]
                     del x[i]
+            '''
             self.viewer_optimization.plot(np.array(x),
                                           np.array(self.test_fit.reporter),
                                           pen=pg.mkPen((0,0,0),width=2),
@@ -2242,7 +2307,41 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                 fit_function=possible_fitfunc[index_model]
             
         return fit_function,fit_func_interm,fit_func_interm_what
-           
+    def get_sigmas_ready(self,global_TRPES_sigmas,global_TRPES_time_inverted,
+                         checkBox_global_subtract_background,comboBox_global_TRPES_which,
+                         global_TRPES_subtract_bg_limits,global_TRPES_sliced_for_new_dataset):
+        '''
+        get the sigmas ready, as the original data has been treated most likely by:
+        background subtraction
+        cropping
+        returns a list of arrays [(array of time-slice),...]
+        '''
+        #check whether the time-axis was inverted
+        if global_TRPES_time_inverted==True:
+            print('flip the time-axis for the sigmas!')
+            global_TRPES_sigmas=np.flip(global_TRPES_sigmas,axis=1)
+        #check whether background was subtracted:
+        if checkBox_global_subtract_background.isChecked()==True:
+            print('subtract the background for the sigmas')
+            #calculate the sigmas for the averaged part
+            average_sigmas=np.sqrt(np.sum(np.power(global_TRPES_sigmas[:,global_TRPES_subtract_bg_limits[0]:global_TRPES_subtract_bg_limits[1]],2),axis=1))
+            global_TRPES_sigmas=np.sqrt(np.power(global_TRPES_sigmas,2).transpose()+np.power(average_sigmas,2)).transpose()
+        #check whether it is on a part or the whole one and slice the global_TRPES_sigmas
+        if comboBox_global_TRPES_which.currentIndex()==1:
+            print('cut and slice for the sigmas', global_TRPES_sliced_for_new_dataset)
+            global_TRPES_sigmas=global_TRPES_sigmas[global_TRPES_sliced_for_new_dataset[0]:global_TRPES_sliced_for_new_dataset[1],
+                                                    global_TRPES_sliced_for_new_dataset[2]:global_TRPES_sliced_for_new_dataset[3]]
+        #check whether some values of sigma are exactly zero. If so, change them to 1
+        for i in range(global_TRPES_sigmas.shape[0]):
+            for j in range(global_TRPES_sigmas.shape[1]):
+                if global_TRPES_sigmas[i,j]==0:
+                    global_TRPES_sigmas[i,j]=1
+        sigmas=[]
+        for n in range(global_TRPES_sigmas.shape[1]):
+                sigmas.append(global_TRPES_sigmas[:,n])
+        print('shape of the sigmas to check whether that is right',len(sigmas))
+        return sigmas    
+        
     @pyqtSlot()
     def on_pushButton_global_fit_2_clicked(self):
         '''
@@ -2288,19 +2387,34 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             for n in range(TRPES.shape[1]):
                 tfit.append(t)
                 yfit.append(TRPES[:,n])
+            #getting the exp. incertitudes into form
+            if type(self.global_TRPES_sigmas)!=type(None):
+                sigmas=self.get_sigmas_ready(self.global_TRPES_sigmas,self.global_TRPES_time_inverted,
+                         self.checkBox_global_subtract_background,self.comboBox_global_TRPES_which,
+                         self.global_TRPES_subtract_bg_limits,self.global_TRPES_sliced_for_new_dataset)
+            else:
+                sigmas=[]
+                for n in range(TRPES.shape[1]):
+                    sigmas.append(None)
+            
             #fitting it!
             plsq,cov,info,msg,ier=leastsq(test_fit.fit_function,values_to_be_fitted,
                               args=(values_to_be_fitted_what,fit_function,tfit,yfit,
-                                    fit_func_interm,fit_func_interm_what,self.checkBox_global_floating_t0.isChecked(),self.checkBox_global_parallel.isChecked()),
+                                    fit_func_interm,fit_func_interm_what,self.checkBox_global_floating_t0.isChecked(),self.checkBox_global_parallel.isChecked(),sigmas),
                                     full_output=True,maxfev=self.spinBox_max_Iterations_fit.value())
             #sweet! Now update/get incertituted all the other stuff
             t2=t+test_fit.time_offset[0]
             test_fit.ptot_function(plsq,values_to_be_fitted_what)
             self.global_params_from_fit=[test_fit.extract_Deltas_plsqs(plsq,cov,values_to_be_fitted_what,fit_function,tfit,yfit,
-                                               fit_func_interm,fit_func_interm_what,self.checkBox_global_parallel.isChecked()),
+                                               fit_func_interm,fit_func_interm_what,self.checkBox_global_parallel.isChecked(),sigmas=sigmas),
                                          info,values_to_be_fitted_what,fixed_values_what,fixed_values]
             self.global_DAS_fitted=[]
             self.global_decays_fitted=[]
+            #get the uncertainties for the DAS:
+            DAS_plsqs,DAS_deltas=test_fit.get_deltas_DAS(plsq,tfit,yfit,fit_func_interm,fit_func_interm_what, self.checkBox_global_parallel.isChecked(),sigmas=sigmas)
+            print('executed it?', len(DAS_plsqs),len(DAS_plsqs[0]),len(DAS_deltas),len(DAS_deltas[0]))
+            DAS_deltas=np.array(DAS_deltas)
+            self.global_DAS_deltas=DAS_deltas
             if index_model==3:
                 self.global_DAS_fitted.append(np.atleast_2d(np.array(test_fit.sigma_1)))
                 decay=test_fit.fct_auto_corr(t2,0)
@@ -2375,7 +2489,8 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                     test_fit.interm_fit.sigma_offset=test_fit.sigma_offset
                     for n in range(eV.shape[0]):
                         self.global_TRPES_fitted[n,:]=fit_func_interm(times[n,:],n)
-                    self.global_TRPES_fitted[0,:]=fit_func_interm(times[0,:],0)
+                    self.global_TRPES_fitted[0,:]=np.zeros(times[0,:].shape)
+                    #self.global_TRPES_fitted[0,:]=fit_func_interm(np.zeros(times[0,:].shape),0)
             self.global_t0=test_fit.time_offset            
             self.global_TRPES_fitted=self.global_TRPES_fitted.transpose()
             #self.global_TRPES_fitted=TRPES.max()*self.global_TRPES_fitted/self.global_TRPES_fitted.max()
@@ -2429,11 +2544,11 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                 #revert back to no background subtraction
                 self.global_TRPES=copy.deepcopy(self.global_TRPES_original_for_bg)
             else:
-                self.global_TRPES=self.subtract_background(self.global_TRPES_original_for_bg,self.global_time,
+                self.global_TRPES,self.global_TRPES_subtract_bg_limits=self.subtract_background(self.global_TRPES_original_for_bg,self.global_time,
                                                            self.doubleSpinBox_global_bg_subtract_from.value(),
                                                            self.doubleSpinBox_global_bg_subtract_to.value())
             self.plot_TRPES(self.viewer_global_orig_TRPES,self.global_TRPES,self.global_time,self.global_eV)
-            self.viewer_global_pe_gauss_update()
+            #self.viewer_global_pe_gauss_update()
             self.viewer_global_time_guess_update()
             
     def subtract_background(self,z,x,value1,value2):
@@ -2441,10 +2556,12 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         index_to=self.find_nearest_index(x,value2)
         if index_from<index_to:
             to_subtract=np.sum(np.atleast_2d(z[index_from:index_to+1,:]),axis=0)/(index_to+1-index_from)
+            subtract_limits=(index_from,index_to+1)
         else:
             to_subtract=np.sum(np.atleast_2d(z[index_to:index_from+1,:]),axis=0)/(index_to+1-index_from)
+            subtract_limits=(index_to+1,index_from)
         z2=z-np.atleast_2d(to_subtract)
-        return z2
+        return z2,subtract_limits
         
 
     ##########################
@@ -2487,6 +2604,7 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         self.viewer_global_time_guess_bidir_update()
         self.checkBox_global_subtract_background_bidir.setChecked(False)
         self.initalize_spinboxes_new_dataset_bidir()
+        self.global_TRPES_bidir_sigmas=None
         
     @pyqtSlot()
     def on_pushButton_get_reconstructed_TRPES_bidir_clicked(self):
@@ -2508,6 +2626,7 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             self.viewer_global_time_guess_bidir_update()
             self.checkBox_global_subtract_background_bidir.setChecked(False)
             self.initalize_spinboxes_new_dataset_bidir()
+            self.global_TRPES_bidir_sigmas=None
         
     @pyqtSlot()
     def on_pushButton_global_load_trpes_bidir_clicked(self):
@@ -2525,10 +2644,13 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             self.comboBox_global_bidir_TRPES_which.blockSignals(False)
             #load the data as a csv file
             self.global_time_bidir,self.global_eV_bidir,self.global_TRPES_bidir=self.load_csv(filename)
+            self.global_TRPES_bidir_z_max=self.global_TRPES_bidir.max()
+            self.global_TRPES_bidir=self.global_TRPES_bidir/self.global_TRPES_bidir_z_max
             self.plot_TRPES(self.viewer_global_orig_TRPES_bidir,self.global_TRPES_bidir,self.global_time_bidir,self.global_eV_bidir)
             self.viewer_global_time_guess_bidir_update()
             self.checkBox_global_subtract_background_bidir.setChecked(False)
             self.initalize_spinboxes_new_dataset_bidir()
+            self.global_TRPES_bidir_sigmas=None
         elif filename!='':
             self.comboBox_global_bidir_TRPES_which.blockSignals(True)
             self.comboBox_global_bidir_TRPES_which.clear()
@@ -2542,7 +2664,24 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             self.viewer_global_time_guess_bidir_update()
             self.checkBox_global_subtract_background_bidir.setChecked(False)
             self.initalize_spinboxes_new_dataset_bidir()
-            
+    @pyqtSlot()
+    def on_pushButton_global_load_trpes_bidir_sigmas_clicked(self):
+        "load the sigmas, assuming they are also saved in a csv format"
+        #only if self.global_TRPES!=empty
+        if type(self.global_TRPES_bidir)!=type(None):
+            print('loading uncertainties')
+            filename = QFileDialog.getOpenFileName(self, 'Open File',self.dir)[0]
+            self.dir=filename[:(-len(filename.split('/')[-1]))]
+            if filename[-3:]=='csv':
+                print('it loaded as a csv file')
+                #load the data as a csv file
+                time,eV,sigmas=self.load_csv(filename)
+                if sigmas.shape[0]==self.global_TRPES_bidir.shape[0] and self.global_TRPES_bidir.shape[1]==sigmas.shape[1]:
+                    sigmas=sigmas/self.global_TRPES_bidir_z_max
+                    self.global_TRPES_bidir_sigmas=sigmas
+                    print('added sigma')
+                else:
+                    print('sigmas have a different shape than the loaded TRPES')
     def initalize_spinboxes_new_dataset_bidir(self):
         #sets limits time for the currently loaded dataset
         min_value_time=self.global_time_bidir.min()
@@ -2588,7 +2727,8 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                     time_min-=1
                 else:
                     time_max+=1
-            self.global_TRPES_bidir_dataset=copy.deepcopy(self.global_TRPES_bidir[time_min:time_max+1,eV_min:eV_max+1])
+            self.global_TRPES_bidir_dataset=copy.deepcopy(self.global_TRPES_bidir[time_min:time_max+1,eV_min:eV_max+1])            
+            self.global_TRPES_bidir_sliced_for_new_dataset=[time_min,time_max+1,eV_min,eV_max+1]
             self.global_time_bidir_dataset=copy.deepcopy(self.global_time_bidir[time_min:time_max+1])
             self.global_eV_bidir_dataset=copy.deepcopy(self.global_eV_bidir[eV_min:eV_max+1])
             #updating the combobox
@@ -2674,7 +2814,7 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                 self.global_TRPES_bidir=copy.deepcopy(self.global_TRPES_original_for_bg_bidir)
             else:
                 #subtract the background
-                self.global_TRPES_bidir=self.subtract_background(self.global_TRPES_original_for_bg_bidir,
+                self.global_TRPES_bidir,self.global_TRPES_bidir_subtract_bg_limits=self.subtract_background(self.global_TRPES_original_for_bg_bidir,
                                                                  self.global_time_bidir,
                                                                  self.doubleSpinBox_global_bg_subtract_from_bidir.value(),
                                                                  self.doubleSpinBox_global_bg_subtract_to_bidir.value())
@@ -2974,7 +3114,30 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         function_pos=fit_func_interm[0]
         function_min=fit_func_interm[1]        
         return function_pos,function_min,values_to_fit_what,values_to_fit,tfit,yfit,values_fixed,values_fixed_what
-
+    def get_sigmas_ready_bidir(self,global_TRPES_sigmas,
+                         checkBox_global_subtract_background,comboBox_global_TRPES_which,
+                         global_TRPES_subtract_bg_limits,global_TRPES_sliced_for_new_dataset):
+        '''
+        get the sigmas ready, as the original data has been treated most likely by:
+        background subtraction
+        cropping
+        returns a list of arrays [(array of time-slice),...]
+        '''
+        #check whether background was subtracted:
+        if checkBox_global_subtract_background.isChecked()==True:
+            print('subtract the background for the sigmas')
+            #calculate the sigmas for the averaged part
+            average_sigmas=np.sqrt(np.sum(np.power(global_TRPES_sigmas[:,global_TRPES_subtract_bg_limits[0]:global_TRPES_subtract_bg_limits[1]],2),axis=1))
+            global_TRPES_sigmas=np.sqrt(np.power(global_TRPES_sigmas,2).transpose()+np.power(average_sigmas,2)).transpose()
+        #check whether it is on a part or the whole one and slice the global_TRPES_sigmas
+        if comboBox_global_TRPES_which.currentIndex()==1:
+            print('cut and slice for the sigmas', global_TRPES_sliced_for_new_dataset)
+            global_TRPES_sigmas=global_TRPES_sigmas[global_TRPES_sliced_for_new_dataset[0]:global_TRPES_sliced_for_new_dataset[1],
+                                                    global_TRPES_sliced_for_new_dataset[2]:global_TRPES_sliced_for_new_dataset[3]]
+        sigmas=[]
+        for n in range(global_TRPES_sigmas.shape[1]):
+                sigmas.append(global_TRPES_sigmas[:,n])
+        return sigmas
     
     @pyqtSlot()
     def on_pushButton_global_fit_bidir_clicked(self):
@@ -2990,15 +3153,37 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                 self.global_time_bidir=copy.deepcopy(xi)
             
             function_pos,function_min,values_to_fit_what,values_to_fit,tfit,yfit,values_fixed,values_fixed_what=self.update_global_fit_bidir_2d_object()
+            #getting the uncertainties ready
+            if type(self.global_TRPES_bidir_sigmas)!=type(None):
+                sigmas=self.get_sigmas_ready_bidir(self.global_TRPES_bidir_sigmas,
+                         self.checkBox_global_subtract_background_bidir,self.comboBox_global_bidir_TRPES_which,
+                         self.global_TRPES_bidir_subtract_bg_limits,self.global_TRPES_bidir_sliced_for_new_dataset)
+            else:
+                sigmas=[]
+                for n in range(self.global_TRPES_bidir.shape[1]):
+                    sigmas.append(None)
+            #fitting it!
+            #print('sigmas main',sigmas,type(sigmas))
             plsq,cov,info,msg,ier=leastsq(self.global_fit_bidir_2d.fit_function,values_to_fit,
                           args=(values_to_fit_what,function_pos,function_min,tfit,yfit,self.checkBox_global_bidir_floating_t0.isChecked(),
-                                self.checkBox_global_bidir_pos_parallel.isChecked(),self.checkBox_global_bidir_min_parallel.isChecked()),
+                                self.checkBox_global_bidir_pos_parallel.isChecked(),self.checkBox_global_bidir_min_parallel.isChecked(),sigmas),
                           full_output=True,maxfev=self.spinBox_max_Iterations_fit_bidir.value())
             #get the deltas
             plsqs,Deltas=self.global_fit_bidir_2d.extract_Deltas_plsqs(plsq,cov,values_to_fit_what,function_pos,function_min,tfit,yfit,
                                                                        self.checkBox_global_bidir_floating_t0.isChecked(),
-                                                                       self.checkBox_global_bidir_pos_parallel.isChecked(),self.checkBox_global_bidir_min_parallel.isChecked())
+                                                                       self.checkBox_global_bidir_pos_parallel.isChecked(),
+                                                                       self.checkBox_global_bidir_min_parallel.isChecked(),
+                                                                       sigmas=sigmas)
             self.global_fit_bidir_2d.ptot_function(plsqs,values_to_fit_what)
+            #get the deltas for the DAS
+            DAS_plsqs,DAS_deltas=self.global_fit_bidir_2d.get_deltas_DAS(plsq,cov,values_to_fit_what,function_pos,function_min,tfit,yfit,
+                                                                       self.checkBox_global_bidir_floating_t0.isChecked(),
+                                                                       self.checkBox_global_bidir_pos_parallel.isChecked(),
+                                                                       self.checkBox_global_bidir_min_parallel.isChecked(),
+                                                                         sigmas)
+            #print('executed it?', len(DAS_plsqs),len(DAS_plsqs[0]),len(DAS_deltas),len(DAS_deltas[0]))
+            DAS_deltas=np.array(DAS_deltas)
+            self.global_DAS_bidir_deltas=DAS_deltas
             #get the DAS out+plot them
             self.get_and_plot_DAS(function_pos,function_min)
             #get the decays out+plot them
@@ -3144,6 +3329,7 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         
                 
     def get_and_plot_DAS(self,function_pos,function_min):
+        print('in function get and plot DAS')
         self.global_DAS_bidir=[[],[]]
         index_model_pos=self.comboBox_global_pick_model_bidir_pos_3.currentIndex()
         index_model_min=self.comboBox_global_pick_model_bidir_min_2.currentIndex()
@@ -3167,6 +3353,17 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         for n in [0,1]:
             for i,curve in enumerate(self.global_DAS_bidir[n]):
                 self.viewer_DAS_bidir.plot(self.global_eV_bidir,curve,pen=pg.mkPen(self.colors[i],width=2,style=styles[n]),name=names[n][i])
+                #print(type(curve),type(self.global_DAS_bidir_deltas[:,i]))
+                #print(type(curve[0]),type(self.global_DAS_bidir_deltas[0,i]))
+                #print(self.global_DAS_bidir_deltas)
+                #np.savetxt('control',self.global_DAS_bidir_deltas)
+                y=curve+self.global_DAS_bidir_deltas[:,i]
+                #print('diagnostics',type(y))
+                item1=self.viewer_DAS_bidir.plot(self.global_eV_bidir,curve+self.global_DAS_bidir_deltas[:,i],brush=None,pen=(50,50,200,100))
+                item2=self.viewer_DAS_bidir.plot(self.global_eV_bidir,curve-self.global_DAS_bidir_deltas[:,i],brush=None,pen=(50,50,200,100))
+                errors=pg.FillBetweenItem(curve1=item1, curve2=item2, brush=(self.colors[i][0],self.colors[i][1],self.colors[i][2],100), pen=None)
+                self.viewer_DAS_bidir.addItem(errors)
+                print('should have plotted it...')
         
     def plot_DAS_bidir(self,normalized):
         index_model_pos=self.comboBox_global_pick_model_bidir_pos_3.currentIndex()
@@ -3185,15 +3382,29 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         self.viewer_DAS_bidir.clear()
         self.viewer_das_bidir_legend=self.viewer_DAS_bidir.addLegend(size=(1.,0.1),offset=(-0.4,0.4))
         styles=[QtCore.Qt.SolidLine,QtCore.Qt.DashLine]
+        print('here')
         if normalized==False:
+            print('wuuuut')
             for n in [0,1]:
                 for i,curve in enumerate(self.global_DAS_bidir[n]):
                     self.viewer_DAS_bidir.plot(self.global_eV_bidir,np.reshape(curve,(curve.shape[1],)),pen=pg.mkPen(self.colors[i],width=2,style=styles[n]),name=names[n][i])
+                    #plot the uncertainties
+                    print('plot uncertainties not normalized')
+                    item1=self.viewer_DAS_bidir.plot(self.global_eV_bidir,np.reshape(curve,(curve.shape[1],))+self.global_DAS_bidir_deltas[:,i],brush=None,pen=(50,50,200,0))
+                    item2=self.viewer_DAS_bidir.plot(self.global_eV_bidir,np.reshape(curve,(curve.shape[1],))-self.global_DAS_bidir_deltas[:,i],brush=None,pen=(50,50,200,0))
+                    errors=pg.FillBetweenItem(curve1=item1, curve2=item2, brush=(self.colors[i][0],self.colors[i][1],self.colors[i][2],100), pen=None)
+                    self.viewer_DAS_bidir.addItem(errors)
         else:
+            print('wuuut2')
             for n in [0,1]:
                 for i,curve in enumerate(self.global_DAS_bidir[n]):
                     self.viewer_DAS_bidir.plot(self.global_eV_bidir,np.reshape(curve,(curve.shape[1],))/np.max(curve),pen=pg.mkPen(self.colors[i],width=2,style=styles[n]),name=names[n][i])
-    
+                    print('plot uncertainties normalized')
+                    item1=self.viewer_DAS_bidir.plot(self.global_eV_bidir,(np.reshape(curve,(curve.shape[1],))+self.global_DAS_bidir_deltas[:,i])/np.max(curve),brush=None,pen=(50,50,200,0))
+                    item2=self.viewer_DAS_bidir.plot(self.global_eV_bidir,(np.reshape(curve,(curve.shape[1],))-self.global_DAS_bidir_deltas[:,i])/np.max(curve),brush=None,pen=(50,50,200,0))
+                    errors=pg.FillBetweenItem(curve1=item1, curve2=item2, brush=(self.colors[i][0],self.colors[i][1],self.colors[i][2],100), pen=None)
+                    self.viewer_DAS_bidir.addItem(errors)
+                    
     def normalize_viewer_plot_DAS_bidir(self,hello):
         self.plot_DAS_bidir(self.normalize2.isChecked())
         
@@ -3241,14 +3452,17 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                     k+=1
             np.savetxt(filename+'.decay',data)
             #save the DAS stuff            
-            data=np.zeros((self.global_eV_bidir.shape[0],(len(self.global_DAS_bidir[0])+len(self.global_DAS_bidir[1]))*2))
+            data=np.zeros((self.global_eV_bidir.shape[0],(len(self.global_DAS_bidir[0])+len(self.global_DAS_bidir[1]))*2*2))
             k=0
+            f=0
             print('len stuff in save',len(self.global_DAS_bidir[0]),len(self.global_DAS_bidir[0]))
             for n in [0,1]:
                 for i,curve in enumerate(self.global_DAS_bidir[n]):
-                    data[:,k*2]=self.global_eV_bidir
-                    data[:,k*2+1]=curve
+                    data[:,k*3]=self.global_eV_bidir
+                    data[:,k*3+1]=curve
+                    data[:,k*3+1]=self.global_DAS_bidir_deltas[:,f]
                     k+=1
+                    f+=1
             np.savetxt(filename+'.DAS',data)
             #save the text overview stuff
             file=open(filename+'_overview.txt','w')

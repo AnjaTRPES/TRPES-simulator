@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'TRPESsimulator_main.ui'
 #
-# Created by: PyQt5 UI code generator 5.6
+# Created by: PyQt5 UI code generator 5.9.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -1281,7 +1281,7 @@ class Ui_TRPES_simulator(object):
         self.tab = QtWidgets.QWidget()
         self.tab.setObjectName("tab")
         self.tabWidget_global_guess = QtWidgets.QTabWidget(self.tab)
-        self.tabWidget_global_guess.setGeometry(QtCore.QRect(10, 40, 471, 491))
+        self.tabWidget_global_guess.setGeometry(QtCore.QRect(20, 40, 471, 491))
         self.tabWidget_global_guess.setObjectName("tabWidget_global_guess")
         self.TRPES = QtWidgets.QWidget()
         self.TRPES.setObjectName("TRPES")
@@ -1493,7 +1493,7 @@ class Ui_TRPES_simulator(object):
         self.horizontalLayout_46.addWidget(self.radioButton_tau3_fixed)
         self.verticalLayout_9.addLayout(self.horizontalLayout_46)
         self.layoutWidget14 = QtWidgets.QWidget(self.tab_time_2)
-        self.layoutWidget14.setGeometry(QtCore.QRect(10, 260, 262, 27))
+        self.layoutWidget14.setGeometry(QtCore.QRect(10, 260, 280, 27))
         self.layoutWidget14.setObjectName("layoutWidget14")
         self.horizontalLayout_47 = QtWidgets.QHBoxLayout(self.layoutWidget14)
         self.horizontalLayout_47.setContentsMargins(0, 0, 0, 0)
@@ -1534,7 +1534,7 @@ class Ui_TRPES_simulator(object):
         self.spinBox_max_Iterations_fit.setObjectName("spinBox_max_Iterations_fit")
         self.horizontalLayout_50.addWidget(self.spinBox_max_Iterations_fit)
         self.layoutWidget_5 = QtWidgets.QWidget(self.tab_time_2)
-        self.layoutWidget_5.setGeometry(QtCore.QRect(250, 320, 211, 108))
+        self.layoutWidget_5.setGeometry(QtCore.QRect(250, 320, 211, 123))
         self.layoutWidget_5.setObjectName("layoutWidget_5")
         self.verticalLayout_8 = QtWidgets.QVBoxLayout(self.layoutWidget_5)
         self.verticalLayout_8.setContentsMargins(0, 0, 0, 0)
@@ -1588,7 +1588,7 @@ class Ui_TRPES_simulator(object):
         self.horizontalLayout_2.addWidget(self.checkBox_global_floating_t0)
         self.verticalLayout_8.addLayout(self.horizontalLayout_2)
         self.layoutWidget16 = QtWidgets.QWidget(self.tab_time_2)
-        self.layoutWidget16.setGeometry(QtCore.QRect(10, 10, 148, 42))
+        self.layoutWidget16.setGeometry(QtCore.QRect(10, 10, 159, 54))
         self.layoutWidget16.setObjectName("layoutWidget16")
         self.verticalLayout_28 = QtWidgets.QVBoxLayout(self.layoutWidget16)
         self.verticalLayout_28.setContentsMargins(0, 0, 0, 0)
@@ -1603,7 +1603,7 @@ class Ui_TRPES_simulator(object):
         self.checkBox_global_time_display_from.setObjectName("checkBox_global_time_display_from")
         self.verticalLayout_28.addWidget(self.checkBox_global_time_display_from)
         self.layoutWidget17 = QtWidgets.QWidget(self.tab_time_2)
-        self.layoutWidget17.setGeometry(QtCore.QRect(130, 30, 189, 22))
+        self.layoutWidget17.setGeometry(QtCore.QRect(156, 32, 204, 31))
         self.layoutWidget17.setObjectName("layoutWidget17")
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout(self.layoutWidget17)
         self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
@@ -1687,6 +1687,9 @@ class Ui_TRPES_simulator(object):
         self.comboBox_global_fit_or_residual.addItem("")
         self.comboBox_global_fit_or_residual.addItem("")
         self.horizontalLayout_43.addWidget(self.comboBox_global_fit_or_residual)
+        self.pushButton_global_load_trpes_sigmas = QtWidgets.QPushButton(self.tab)
+        self.pushButton_global_load_trpes_sigmas.setGeometry(QtCore.QRect(274, 40, 141, 25))
+        self.pushButton_global_load_trpes_sigmas.setObjectName("pushButton_global_load_trpes_sigmas")
         self.tabWidget.addTab(self.tab, "")
         self.tab_7 = QtWidgets.QWidget()
         self.tab_7.setObjectName("tab_7")
@@ -1909,7 +1912,7 @@ class Ui_TRPES_simulator(object):
         self.radioButton_time_offset_bidir_pos_3.setObjectName("radioButton_time_offset_bidir_pos_3")
         self.horizontalLayout_127.addWidget(self.radioButton_time_offset_bidir_pos_3)
         self.layoutWidget_33 = QtWidgets.QWidget(self.tab_18)
-        self.layoutWidget_33.setGeometry(QtCore.QRect(240, 30, 200, 108))
+        self.layoutWidget_33.setGeometry(QtCore.QRect(240, 30, 200, 123))
         self.layoutWidget_33.setObjectName("layoutWidget_33")
         self.verticalLayout_25 = QtWidgets.QVBoxLayout(self.layoutWidget_33)
         self.verticalLayout_25.setContentsMargins(0, 0, 0, 0)
@@ -1965,7 +1968,7 @@ class Ui_TRPES_simulator(object):
         self.horizontalLayout_26.addWidget(self.checkBox_global_bidir_floating_t0)
         self.verticalLayout_25.addLayout(self.horizontalLayout_26)
         self.layoutWidget_30 = QtWidgets.QWidget(self.tab_18)
-        self.layoutWidget_30.setGeometry(QtCore.QRect(175, 0, 262, 27))
+        self.layoutWidget_30.setGeometry(QtCore.QRect(175, 0, 280, 27))
         self.layoutWidget_30.setObjectName("layoutWidget_30")
         self.horizontalLayout_128 = QtWidgets.QHBoxLayout(self.layoutWidget_30)
         self.horizontalLayout_128.setContentsMargins(0, 0, 0, 0)
@@ -2051,7 +2054,7 @@ class Ui_TRPES_simulator(object):
         self.horizontalLayout_116.addWidget(self.radioButton_tau3_fixed_bidir_min)
         self.verticalLayout_23.addLayout(self.horizontalLayout_116)
         self.layoutWidget_37 = QtWidgets.QWidget(self.tab_19)
-        self.layoutWidget_37.setGeometry(QtCore.QRect(180, 0, 262, 27))
+        self.layoutWidget_37.setGeometry(QtCore.QRect(180, 0, 280, 27))
         self.layoutWidget_37.setObjectName("layoutWidget_37")
         self.horizontalLayout_121 = QtWidgets.QHBoxLayout(self.layoutWidget_37)
         self.horizontalLayout_121.setContentsMargins(0, 0, 0, 0)
@@ -2093,7 +2096,7 @@ class Ui_TRPES_simulator(object):
         self.horizontalLayout_120.addWidget(self.radioButton_time_offset_bidir_min_2)
         self.tabWidget_4.addTab(self.tab_19, "")
         self.layoutWidget_43 = QtWidgets.QWidget(self.tab_12)
-        self.layoutWidget_43.setGeometry(QtCore.QRect(2, 4, 148, 42))
+        self.layoutWidget_43.setGeometry(QtCore.QRect(2, 4, 159, 54))
         self.layoutWidget_43.setObjectName("layoutWidget_43")
         self.verticalLayout_29 = QtWidgets.QVBoxLayout(self.layoutWidget_43)
         self.verticalLayout_29.setContentsMargins(0, 0, 0, 0)
@@ -2108,7 +2111,7 @@ class Ui_TRPES_simulator(object):
         self.checkBox_global_bidir_time_display_from.setObjectName("checkBox_global_bidir_time_display_from")
         self.verticalLayout_29.addWidget(self.checkBox_global_bidir_time_display_from)
         self.layoutWidget_42 = QtWidgets.QWidget(self.tab_12)
-        self.layoutWidget_42.setGeometry(QtCore.QRect(122, 24, 189, 22))
+        self.layoutWidget_42.setGeometry(QtCore.QRect(170, 24, 204, 28))
         self.layoutWidget_42.setObjectName("layoutWidget_42")
         self.horizontalLayout_99 = QtWidgets.QHBoxLayout(self.layoutWidget_42)
         self.horizontalLayout_99.setContentsMargins(0, 0, 0, 0)
@@ -2189,10 +2192,13 @@ class Ui_TRPES_simulator(object):
         self.viewer_global_fitted_bidir = GraphicsLayoutWidget(self.tab_7)
         self.viewer_global_fitted_bidir.setGeometry(QtCore.QRect(527, 40, 511, 271))
         self.viewer_global_fitted_bidir.setObjectName("viewer_global_fitted_bidir")
+        self.pushButton_global_load_trpes_bidir_sigmas = QtWidgets.QPushButton(self.tab_7)
+        self.pushButton_global_load_trpes_bidir_sigmas.setGeometry(QtCore.QRect(316, 40, 131, 25))
+        self.pushButton_global_load_trpes_bidir_sigmas.setObjectName("pushButton_global_load_trpes_bidir_sigmas")
         self.tabWidget.addTab(self.tab_7, "")
         TRPES_simulator.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(TRPES_simulator)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1152, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1152, 22))
         self.menubar.setObjectName("menubar")
         self.menuAbout = QtWidgets.QMenu(self.menubar)
         self.menuAbout.setObjectName("menuAbout")
@@ -2222,14 +2228,14 @@ class Ui_TRPES_simulator(object):
         self.tabWidget_PE_time_2.setCurrentIndex(0)
         self.tabWidget_global_guess.setCurrentIndex(1)
         self.tabWidget_2.setCurrentIndex(3)
-        self.tabWidget_3.setCurrentIndex(1)
+        self.tabWidget_3.setCurrentIndex(0)
         self.tabWidget_4.setCurrentIndex(1)
         self.tabWidget_bidir.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(TRPES_simulator)
 
     def retranslateUi(self, TRPES_simulator):
         _translate = QtCore.QCoreApplication.translate
-        TRPES_simulator.setWindowTitle(_translate("TRPES_simulator", "TRPES simulator v1.1"))
+        TRPES_simulator.setWindowTitle(_translate("TRPES_simulator", "TRPES simulator v2.2"))
         self.viewer_sim_trpes.setToolTip(_translate("TRPES_simulator", "TRPES:\n"
 "Scroll pour zoom, \n"
 "click on \'A\' in the lower-left corner to get back\n"
@@ -2463,6 +2469,8 @@ class Ui_TRPES_simulator(object):
         self.pushButton_save_global_fit_results.setText(_translate("TRPES_simulator", "Save Fit Results "))
         self.comboBox_global_fit_or_residual.setItemText(0, _translate("TRPES_simulator", "Fit"))
         self.comboBox_global_fit_or_residual.setItemText(1, _translate("TRPES_simulator", "Residual"))
+        self.pushButton_global_load_trpes_sigmas.setToolTip(_translate("TRPES_simulator", "Load a TRPES file, format see readme"))
+        self.pushButton_global_load_trpes_sigmas.setText(_translate("TRPES_simulator", "Load TRPES_sigmas"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("TRPES_simulator", "Global Analysis"))
         self.tabWidget.setTabToolTip(self.tabWidget.indexOf(self.tab), _translate("TRPES_simulator", "Do a global fit of a TRPES with the decay going in the positive direction.\n"
 "Two fitting mechanisms are possible:\n"
@@ -2554,6 +2562,8 @@ class Ui_TRPES_simulator(object):
 "click on \'A\' in the lower-left corner to get back\n"
 " Dragging the lines of the colobar on the right changes the z-scale\n"
 "Right Mouse-click for more options (e.g. log-scale of the time-axis)"))
+        self.pushButton_global_load_trpes_bidir_sigmas.setToolTip(_translate("TRPES_simulator", "Load a TRPES file, format see readme"))
+        self.pushButton_global_load_trpes_bidir_sigmas.setText(_translate("TRPES_simulator", "Load TRPES_sigmas"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_7), _translate("TRPES_simulator", "Global Analysis_two directions"))
         self.tabWidget.setTabToolTip(self.tabWidget.indexOf(self.tab_7), _translate("TRPES_simulator", "Do a global fit of a TRPES \n"
 "with decays going in both directions.\n"

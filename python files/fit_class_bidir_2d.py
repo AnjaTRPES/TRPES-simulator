@@ -24,6 +24,8 @@ class fits_bidir_2d(object):
         self.counter=0
         self.reporter=[]
         self.interm_fit=fits_bidir()
+        self.cov_DASs=[]
+        self.plsq_DASs=[]
     
     def fwhm_to_sigma(self,fwhm):
         return fwhm/(2*np.sqrt(2*np.log(2)))
@@ -135,7 +137,7 @@ class fits_bidir_2d(object):
     def tri_exp_parallel_pop(self,t,n):
         return self.special_erf(t,self.tau3[n],self.fwhm)
     
-    def fit_function(self,Ptot,what_Ptots,function_pos,function_min,tfit,Yfit,floating_t0=False,parallel_pos=False,parallel_min=False):
+    def fit_function(self,Ptot,what_Ptots,function_pos,function_min,tfit,Yfit,floating_t0=False,parallel_pos=False,parallel_min=False,sigmas=None):
         '''
         Fit function (leastsq fit) with which the exp. values are fitted.
         Ptot: values to fit
@@ -152,6 +154,8 @@ class fits_bidir_2d(object):
         self.interm_fit.tau2=self.tau2
         self.interm_fit.tau3=self.tau3
         self.interm_fit.fwhm=self.fwhm
+        self.cov_DASs=[]
+        self.plsq_DASs=[]
         for k,t in enumerate(tfit):
             self.interm_fit.moy=self.moy[k]
             if floating_t0==True:
@@ -163,12 +167,21 @@ class fits_bidir_2d(object):
                 Maxcalls=10000
             y=Yfit[k]
             Ptot_interm,Ptot_interm_what=self.get_Ptot_interm(function_pos,function_min,k,floating_t0,parallel_pos,parallel_min)
-            plsq,cov=leastsq(self.interm_fit.fit_function,Ptot_interm,
-                  args=(Ptot_interm_what,function_pos,function_min,t,y,floating_t0),full_output=False,maxfev=Maxcalls)
+            #plsq,cov=leastsq(self.interm_fit.fit_function,Ptot_interm,
+            #     args=(Ptot_interm_what,function_pos,function_min,t,y,floating_t0),full_output=False,maxfev=Maxcalls)
+            #print('sigmas[k]',sigmas[k])
+            #print(type(sigmas[k]))
+            plsq,cov,info,msg,ier=leastsq(self.interm_fit.fit_function,Ptot_interm,
+                                          args=(Ptot_interm_what,function_pos,function_min,t,y,floating_t0,sigmas[k]),full_output=True)
+            self.cov_DASs.append(cov)
+            self.plsq_DASs.append(plsq)
             self.reset_sigmas(plsq,Ptot_interm_what,k,floating_t0,parallel_pos,parallel_min)
             Ypos=function_pos(t,0)
-            Ymin=function_min(-t,1)
-            return_roots.append(np.sqrt(np.power(Ypos+Ymin+self.moy[k]-Yfit[k],2)))
+            Ymin=function_min(-t,1)            
+            if type(sigmas[k])==type(None):
+                return_roots.append(np.sqrt(np.power(Ypos+Ymin+self.moy[k]-Yfit[k],2)))
+            else:                
+                return_roots.append(np.sqrt(np.power(np.divide(Ypos+Ymin+self.moy[k]-Yfit[k],sigmas[k]),2)))
         if len(return_roots)==1:
             return return_roots[0]
         else:
@@ -360,8 +373,48 @@ class fits_bidir_2d(object):
     def fct_auto_corr_with_offset(self,t,n,several_fwhms=False):
         sigma=self.fwhm_to_sigma(self.fwhm[n])
         return self.sigma_1[n]*1/(sigma*np.sqrt(2*np.pi))*np.exp(-((t-self.time_offset)**2)/(2*(sigma)**2))+self.offset(t,n)
+
+    def get_deltas_DAS(self,plsq,cov,whatPtots,function_pos,function_min,tfit,Yfit,floating_t0,parallel_pos,parallel_min,sigmas):
+        """
+        This function gets the uncertainties for each DAS
+        """
+
+        DAS_plsqs=[]
+        DAS_deltas=[]
+        for k,t in enumerate(tfit):
+            self.interm_fit.moy=self.moy[k]
+            if floating_t0==True:
+                self.interm_fit.time_offset=self.time_offset[k]
+            t=tfit[k]+self.time_offset[0]
+            Maxcalls=250
+            if floating_t0==True:
+                t=tfit[k]       
+                Maxcalls=10000
+            y=Yfit[k]
+            Ptot_interm,Ptot_interm_what=self.get_Ptot_interm(function_pos,function_min,k,floating_t0,parallel_pos,parallel_min)
+            #get the residual
+            Yres=self.interm_fit.fit_function(Ptot_interm,Ptot_interm_what,function_pos,function_min,t,y,floating_t0,sigmas[k])
+            res=np.sqrt(np.power(Yres,2).sum()/Yres.size)
+            plsqs=[]
+            Deltas=[]
+            for i in range(len(self.plsq_DASs[k])):
+                plsqs.append(self.plsq_DASs[i])
+                if type(self.cov_DASs[k])==type(None):
+                    Delta=float('nan')
+                elif self.cov_DASs[k].any()==None:
+                    Delta=float('nan')
+                else:
+                    Delta=(np.sqrt(self.cov_DASs[k].diagonal())*res)[i]
+                Deltas.append(Delta)
+            DAS_plsqs.append(plsqs)
+            DAS_deltas.append(Deltas)
+        return DAS_plsqs,DAS_deltas
+        
+
+        
      
-    def extract_Deltas_plsqs(self,plsq,cov,whatPtots,function_pos,function_min,tfit,Yfit,floating_t0,parallel_pos,parallel_min):
+         
+    def extract_Deltas_plsqs(self,plsq,cov,whatPtots,function_pos,function_min,tfit,Yfit,floating_t0,parallel_pos,parallel_min,sigmas):
         '''
         This subfunctions serves as to extract the incertitudes
         out of the optimized functions
@@ -373,7 +426,7 @@ class fits_bidir_2d(object):
         if len(plsq)!=len(whatPtots):
             print ('the lengths of plsq and WhatPtots should be the same!!')
         #get residual
-        Yres=self.fit_function(plsq,whatPtots,function_pos,function_min,tfit,Yfit,floating_t0,parallel_pos,parallel_min)
+        Yres=self.fit_function(plsq,whatPtots,function_pos,function_min,tfit,Yfit,floating_t0,parallel_pos,parallel_min,sigmas=sigmas)
         res=np.sqrt(np.power(Yres,2).sum()/Yres.size)
         plsqs=[]
         Deltas=[]
@@ -384,7 +437,7 @@ class fits_bidir_2d(object):
             elif cov.any()==None:
                 Delta='Inf'
             else:
-                Delta=(np.sqrt(cov.diagonal())*res)[n]
+                Delta=(np.sqrt(cov.diagonal()*res))[n]
             Deltas.append(Delta)
         return plsqs,Deltas
     def get_values(self, strings,n,several_fwhms):

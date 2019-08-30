@@ -22,6 +22,7 @@ class fits_2D_2nd(object):
     counter=0
     interm_fit=fits_2nd()
     reporter=[]
+    cov_DASs=[]
     
 
     def __init__(self,test_param=20):
@@ -217,7 +218,7 @@ class fits_2D_2nd(object):
             fwhm=self.fwhm[n]
         return self.sigma_3[n]*self.special_erf(t,self.tau3,fwhm)
     
-    def fit_function(self,Ptot,what_Ptots,function,tfit,Yfit,interm_fct,interm_fct_what,floating_t0=False,parallel=False,several_fwhms=False):
+    def fit_function(self,Ptot,what_Ptots,function,tfit,Yfit,interm_fct,interm_fct_what,floating_t0=False,parallel=False,sigmas=None,several_fwhms=False):
         '''
         Fit function (leastsq fit) with which the exp. values are fitted.
         Ptot: values to fit
@@ -236,7 +237,10 @@ class fits_2D_2nd(object):
         self.interm_fit.tau2=self.tau2
         self.interm_fit.tau3=self.tau3
         self.interm_fit.fwhm=self.fwhm
-        
+
+        #for the uncertainties of the DAS
+        self.cov_DASs=[]
+        self.plsq_DASs=[]
         print(len(self.reporter))
         print('Ptot',Ptot,'what_Ptots',what_Ptots)
         for n in range(len(tfit)):
@@ -248,20 +252,26 @@ class fits_2D_2nd(object):
             #fitting the sigma parameters to the current selected tau parameters
             Ptot_interm,Ptot_interm_what=self.get_Ptot_interm(interm_fct_what,n,floating_t0,parallel)
             plsq,cov,info,msg,ier=leastsq(self.interm_fit.fit_function,Ptot_interm,
-                              args=(Ptot_interm_what,interm_fct,[t],[y],floating_t0),full_output=True)
+                              args=(Ptot_interm_what,interm_fct,[t],[y],floating_t0,sigmas[n]),full_output=True)
             self.reset_sigmas(plsq,interm_fct_what,n,floating_t0,parallel)
+            self.cov_DASs.append(cov)
+            self.plsq_DASs.append(plsq)
             #attributing the parameters
-            return_roots.append(np.sqrt(np.power(interm_fct(t,0)+self.moy[n]-Yfit[n],2)))
+            if type(sigmas[n])==type(None):
+                return_roots.append(np.sqrt(np.power(interm_fct(t,0)+self.moy[n]-Yfit[n],2)))
+            else:
+                return_roots.append(np.sqrt(np.power(np.divide(interm_fct(t,0)+self.moy[n]-Yfit[n],sigmas[n]),2)))
         if len(return_roots)==1:
             return return_roots[0]
         else:
             start=return_roots[0]
             for n in range(1,len(return_roots)):
-                start=np.concatenate((start,return_roots[n]))
+                start=np.concatenate((start,np.nan_to_num(return_roots[n],nan=0.0,posinf=0.0,neginf=0.0)))
             self.reporter.append(np.sum(start))
             print('error',self.reporter[-1])
             return start
-        
+    
+    
     def get_Ptot_interm(self,function,n,floating_t0,parallel):
         self.interm_fit.moy=[self.moy[n]]
         Ptot_interm=[]
@@ -453,8 +463,41 @@ class fits_2D_2nd(object):
     def fct_auto_corr_with_offset(self,t,n,several_fwhms=False):
         sigma=self.fwhm_to_sigma(self.fwhm[n])
         return 1/(sigma*np.sqrt(2*np.pi))*np.exp(-((t)**2)/(2*(sigma)**2))+self.offset(t,n)
+
+    def get_deltas_DAS(self,plsq,tfit,Yfit,interm_fct,interm_fct_what, parallel=False,floating_t0=False,sigmas=None,several_fwhms=False):
+        """
+        This function gets the uncertainties for each DAS
+        """
+        DAS_plsqs=[]
+        DAS_deltas=[]
+        for n in range(len(tfit)):
+            if floating_t0==False:
+                t=tfit[n]+self.time_offset[0]
+            else:
+                t=tfit[n]
+            y=Yfit[n]
+            Ptot_interm,Ptot_interm_what=self.get_Ptot_interm(interm_fct_what,n,floating_t0,parallel)
+            #get the residual
+            Yres=self.interm_fit.fit_function(Ptot_interm,Ptot_interm_what,interm_fct,[t],[y],floating_t0,sigmas[n])
+            res=np.sqrt(np.power(Yres,2).sum()/Yres.size)
+            plsqs=[]
+            Deltas=[]
+            for i in range(len(self.plsq_DASs[n])):
+                plsqs.append(self.plsq_DASs[i])
+                if type(self.cov_DASs[n])==type(None):
+                    Delta=float('nan')
+                elif self.cov_DASs[n].any()==None:
+                    Delta=float('nan')
+                else:
+                    Delta=(np.sqrt(self.cov_DASs[n].diagonal())*res)[i]
+                Deltas.append(Delta)
+            DAS_plsqs.append(plsqs)
+            DAS_deltas.append(Deltas)
+        return DAS_plsqs,DAS_deltas
+
+        
      
-    def extract_Deltas_plsqs(self,plsq,cov,whatPtots,function,tfit,Yfit,interm_fct,interm_fct_what,parallel=False,several_fwhms=False):
+    def extract_Deltas_plsqs(self,plsq,cov,whatPtots,function,tfit,Yfit,interm_fct,interm_fct_what,parallel=False,sigmas=None,several_fwhms=False):
         '''
         This subfunctions serves as to extract the incertitudes
         out of the optimized functions
@@ -466,7 +509,7 @@ class fits_2D_2nd(object):
         if len(plsq)!=len(whatPtots):
             print ('the lengths of plsq and WhatPtots should be the same!!')
         #get residual
-        Yres=self.fit_function(plsq,whatPtots,function,tfit,Yfit,interm_fct,interm_fct_what,parallel=parallel)
+        Yres=self.fit_function(plsq,whatPtots,function,tfit,Yfit,interm_fct,interm_fct_what,parallel=parallel,sigmas=sigmas)
         res=np.sqrt(np.power(Yres,2).sum()/Yres.size)
         plsqs=[]
         Deltas=[]
@@ -477,7 +520,7 @@ class fits_2D_2nd(object):
             elif cov.any()==None:
                 Delta='Inf'
             else:
-                Delta=(np.sqrt(cov.diagonal())*res)[n]
+                Delta=(np.sqrt(cov.diagonal()*res))[n]
             Deltas.append(Delta)
         return plsqs,Deltas
     def get_values(self, strings,n,several_fwhms):

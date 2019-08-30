@@ -215,14 +215,15 @@ class fits_2nd(object):
         return self.sigma_3[n]*self.special_erf(t,self.tau3,fwhm)
 
     
-    def fit_function(self,Ptot,what_Ptots,function,tfit,Yfit,floating_t0=False,several_fwhms=False):
+    def fit_function(self,Ptot,what_Ptots,function,tfit,Yfit,floating_t0=False,sigmas=None,several_fwhms=False):
         '''
         Fit function (leastsq fit) with which the exp. values are fitted.
         Ptot: values to fit
         what_Ptots: In string form, to attribute it to the class variables
         function: Fitfunction to use
-        tfit: list of [exp times]
-        Yfit: list of [exp. Signals]
+        tfit: one exp times
+        Yfit: one exp. Signals
+        sigmas: optional: one sigmas
         '''
         #print 'fitting %i functions',len(tfit)
         self.ptot_function(Ptot,what_Ptots)
@@ -234,7 +235,10 @@ class fits_2nd(object):
                 t=tfit[n]
             else:
                 t=tfit[n]+self.time_offset[n]
-            return_roots.append(np.sqrt(np.power(function(t,n,several_fwhms)+self.moy[n]-Yfit[n],2)))
+            if type(sigmas)==type(None):
+                return_roots.append(np.sqrt(np.power(function(t,n,several_fwhms)+self.moy[n]-Yfit[n],2)))
+            else:
+                return_roots.append(np.sqrt(np.power(np.divide(function(t,n,several_fwhms)+self.moy[n]-Yfit[n],sigmas),2)))
         if len(return_roots)==1:
             return return_roots[0]
         else:
