@@ -240,12 +240,14 @@ class fits_2nd(object):
             else:
                 return_roots.append(np.sqrt(np.power(np.divide(function(t,n,several_fwhms)+self.moy[n]-Yfit[n],sigmas),2)))
         if len(return_roots)==1:
+            #print('interm error',np.sum(return_roots[0]))
             return return_roots[0]
         else:
             start=return_roots[0]
             #print 'concatenating', len(return_roots)
             for n in range(1,len(return_roots)):
-                start=np.concatenate((start,return_roots[n]))            
+                start=np.concatenate((start,return_roots[n])) 
+            #print('interm error',np.sum(start))
             return start
     
     def ptot_function(self,Ptot,whatPtots):

@@ -6,24 +6,24 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1152</width>
-    <height>605</height>
+    <width>1131</width>
+    <height>752</height>
    </rect>
   </property>
   <property name="acceptDrops">
    <bool>false</bool>
   </property>
   <property name="windowTitle">
-   <string>TRPES simulator v2.2</string>
+   <string>TRPES simulator v3.4</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>0</x>
       <y>0</y>
       <width>1121</width>
-      <height>561</height>
+      <height>691</height>
      </rect>
     </property>
     <property name="font">
@@ -36,7 +36,7 @@
      <string/>
     </property>
     <property name="currentIndex">
-     <number>3</number>
+     <number>6</number>
     </property>
     <widget class="QWidget" name="tab_simulate">
      <property name="font">
@@ -98,41 +98,6 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
           <height>192</height>
          </rect>
         </property>
-       </widget>
-       <widget class="QWidget" name="layoutWidget">
-        <property name="geometry">
-         <rect>
-          <x>80</x>
-          <y>10</y>
-          <width>318</width>
-          <height>28</height>
-         </rect>
-        </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_4">
-         <item>
-          <widget class="QLabel" name="label_4">
-           <property name="text">
-            <string>Maximum Energy of considered PE (in eV)</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QDoubleSpinBox" name="doubleSpinBox_max_Energy_PE">
-           <property name="minimum">
-            <double>1.000000000000000</double>
-           </property>
-           <property name="maximum">
-            <double>15.000000000000000</double>
-           </property>
-           <property name="singleStep">
-            <double>0.100000000000000</double>
-           </property>
-           <property name="value">
-            <double>5.000000000000000</double>
-           </property>
-          </widget>
-         </item>
-        </layout>
        </widget>
        <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
@@ -215,7 +180,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>281</width>
+           <width>295</width>
            <height>68</height>
           </rect>
          </property>
@@ -386,7 +351,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <rect>
           <x>230</x>
           <y>250</y>
-          <width>157</width>
+          <width>170</width>
           <height>27</height>
          </rect>
         </property>
@@ -424,6 +389,69 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          </item>
         </layout>
        </widget>
+       <widget class="QWidget" name="layoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>10</y>
+          <width>414</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_118">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_4">
+           <item>
+            <widget class="QLabel" name="label_4">
+             <property name="text">
+              <string>Maximum Energy of considered PE (in eV)</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="doubleSpinBox_max_Energy_PE">
+             <property name="minimum">
+              <double>1.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>15.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.100000000000000</double>
+             </property>
+             <property name="value">
+              <double>5.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_117">
+           <item>
+            <widget class="QLabel" name="label_124">
+             <property name="text">
+              <string>N(points):</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSpinBox" name="spinBox_simulate_number_energy_points">
+             <property name="minimum">
+              <number>2</number>
+             </property>
+             <property name="maximum">
+              <number>500</number>
+             </property>
+             <property name="value">
+              <number>50</number>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
       </widget>
       <widget class="QWidget" name="tab_time">
        <attribute name="title">
@@ -444,7 +472,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <rect>
           <x>0</x>
           <y>440</y>
-          <width>401</width>
+          <width>411</width>
           <height>30</height>
          </rect>
         </property>
@@ -522,7 +550,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <rect>
           <x>4</x>
           <y>300</y>
-          <width>160</width>
+          <width>178</width>
           <height>98</height>
          </rect>
         </property>
@@ -616,9 +644,9 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
        <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
-          <x>90</x>
+          <x>30</x>
           <y>0</y>
-          <width>311</width>
+          <width>373</width>
           <height>55</height>
          </rect>
         </property>
@@ -694,6 +722,30 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
                </property>
               </widget>
              </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_35">
+               <item>
+                <widget class="QLabel" name="label_123">
+                 <property name="text">
+                  <string>N(points):</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QSpinBox" name="spinBox_simulate_number_time_points">
+                 <property name="minimum">
+                  <number>1</number>
+                 </property>
+                 <property name="maximum">
+                  <number>500</number>
+                 </property>
+                 <property name="value">
+                  <number>50</number>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
             </layout>
            </item>
           </layout>
@@ -720,7 +772,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
           <rect>
            <x>3</x>
            <y>0</y>
-           <width>95</width>
+           <width>100</width>
            <height>98</height>
           </rect>
          </property>
@@ -808,7 +860,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <rect>
           <x>200</x>
           <y>260</y>
-          <width>201</width>
+          <width>210</width>
           <height>27</height>
          </rect>
         </property>
@@ -868,7 +920,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <rect>
           <x>280</x>
           <y>300</y>
-          <width>133</width>
+          <width>145</width>
           <height>92</height>
          </rect>
         </property>
@@ -972,7 +1024,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
         <rect>
          <x>2</x>
          <y>4</y>
-         <width>204</width>
+         <width>215</width>
          <height>71</height>
         </rect>
        </property>
@@ -1091,7 +1143,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <rect>
           <x>80</x>
           <y>10</y>
-          <width>318</width>
+          <width>338</width>
           <height>28</height>
          </rect>
         </property>
@@ -1202,7 +1254,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>281</width>
+           <width>300</width>
            <height>68</height>
           </rect>
          </property>
@@ -1370,7 +1422,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <rect>
           <x>243</x>
           <y>250</y>
-          <width>157</width>
+          <width>170</width>
           <height>27</height>
          </rect>
         </property>
@@ -1443,7 +1495,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
           <rect>
            <x>3</x>
            <y>0</y>
-           <width>133</width>
+           <width>145</width>
            <height>92</height>
           </rect>
          </property>
@@ -1531,7 +1583,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <rect>
           <x>10</x>
           <y>450</y>
-          <width>385</width>
+          <width>411</width>
           <height>30</height>
          </rect>
         </property>
@@ -1600,7 +1652,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <rect>
           <x>10</x>
           <y>340</y>
-          <width>160</width>
+          <width>178</width>
           <height>98</height>
          </rect>
         </property>
@@ -1798,7 +1850,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
           <rect>
            <x>3</x>
            <y>0</y>
-           <width>95</width>
+           <width>100</width>
            <height>98</height>
           </rect>
          </property>
@@ -1895,7 +1947,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <rect>
           <x>10</x>
           <y>260</y>
-          <width>201</width>
+          <width>210</width>
           <height>27</height>
          </rect>
         </property>
@@ -2028,7 +2080,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <rect>
           <x>80</x>
           <y>10</y>
-          <width>318</width>
+          <width>338</width>
           <height>28</height>
          </rect>
         </property>
@@ -2081,7 +2133,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>281</width>
+           <width>300</width>
            <height>68</height>
           </rect>
          </property>
@@ -2249,7 +2301,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <rect>
           <x>242</x>
           <y>250</y>
-          <width>157</width>
+          <width>170</width>
           <height>27</height>
          </rect>
         </property>
@@ -2297,7 +2349,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <rect>
           <x>166</x>
           <y>340</y>
-          <width>95</width>
+          <width>100</width>
           <height>98</height>
          </rect>
         </property>
@@ -2393,7 +2445,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <rect>
           <x>6</x>
           <y>450</y>
-          <width>385</width>
+          <width>411</width>
           <height>30</height>
          </rect>
         </property>
@@ -2559,7 +2611,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <rect>
           <x>6</x>
           <y>340</y>
-          <width>160</width>
+          <width>178</width>
           <height>98</height>
          </rect>
         </property>
@@ -2655,7 +2707,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <rect>
           <x>6</x>
           <y>260</y>
-          <width>201</width>
+          <width>210</width>
           <height>27</height>
          </rect>
         </property>
@@ -2717,7 +2769,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
        <rect>
         <x>780</x>
         <y>330</y>
-        <width>204</width>
+        <width>215</width>
         <height>71</height>
        </rect>
       </property>
@@ -2787,8 +2839,8 @@ Can be used to 'filter' out noise</string>
        <rect>
         <x>10</x>
         <y>10</y>
-        <width>523</width>
-        <height>27</height>
+        <width>574</width>
+        <height>30</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout">
@@ -2864,7 +2916,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
        <rect>
         <x>10</x>
         <y>40</y>
-        <width>430</width>
+        <width>466</width>
         <height>28</height>
        </rect>
       </property>
@@ -3047,10 +3099,10 @@ or assume no prior knowledge of the DAS=Fit2!</string>
      <widget class="QTabWidget" name="tabWidget_global_guess">
       <property name="geometry">
        <rect>
-        <x>20</x>
+        <x>10</x>
         <y>40</y>
         <width>471</width>
-        <height>491</height>
+        <height>631</height>
        </rect>
       </property>
       <property name="currentIndex">
@@ -3064,7 +3116,7 @@ or assume no prior knowledge of the DAS=Fit2!</string>
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>30</y>
+          <y>60</y>
           <width>451</width>
           <height>311</height>
          </rect>
@@ -3081,7 +3133,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <rect>
           <x>10</x>
           <y>0</y>
-          <width>430</width>
+          <width>466</width>
           <height>28</height>
          </rect>
         </property>
@@ -3151,9 +3203,9 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
        <widget class="QWidget" name="layoutWidget_35">
         <property name="geometry">
          <rect>
-          <x>20</x>
-          <y>350</y>
-          <width>263</width>
+          <x>10</x>
+          <y>470</y>
+          <width>279</width>
           <height>92</height>
          </rect>
         </property>
@@ -3319,8 +3371,8 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
        <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
-          <x>290</x>
-          <y>350</y>
+          <x>280</x>
+          <y>460</y>
           <width>171</width>
           <height>106</height>
          </rect>
@@ -3351,6 +3403,78 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          </item>
         </layout>
        </widget>
+       <widget class="QWidget" name="layoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>30</y>
+          <width>448</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_139">
+         <item>
+          <widget class="QComboBox" name="comboBox_sigma_or_trpes">
+           <item>
+            <property name="text">
+             <string>TRPES</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>SIGMAS</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>TRPES_red</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_9">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="radioButton_sqrt_TRPES_sigmas">
+           <property name="text">
+            <string>Sqrt(TRPES) as sigma</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_135">
+           <item>
+            <widget class="QLabel" name="label_125">
+             <property name="text">
+              <string>min(SIGMA)=</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="doubleSpinBox_min_sigma">
+             <property name="decimals">
+              <number>4</number>
+             </property>
+             <property name="singleStep">
+              <double>0.010000000000000</double>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
       </widget>
       <widget class="QWidget" name="tab_time_2">
        <attribute name="title">
@@ -3362,7 +3486,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
           <x>10</x>
           <y>60</y>
           <width>451</width>
-          <height>192</height>
+          <height>311</height>
          </rect>
         </property>
        </widget>
@@ -3370,7 +3494,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>430</y>
+          <y>570</y>
           <width>385</width>
           <height>30</height>
          </rect>
@@ -3421,8 +3545,8 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>320</y>
-          <width>227</width>
+          <y>450</y>
+          <width>258</width>
           <height>101</height>
          </rect>
         </property>
@@ -3439,7 +3563,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
            <item>
             <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_tau1_guess">
              <property name="decimals">
-              <number>3</number>
+              <number>4</number>
              </property>
              <property name="minimum">
               <double>0.001000000000000</double>
@@ -3479,7 +3603,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
            <item>
             <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_tau2_guess">
              <property name="decimals">
-              <number>3</number>
+              <number>4</number>
              </property>
              <property name="minimum">
               <double>0.001000000000000</double>
@@ -3516,7 +3640,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
            <item>
             <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_tau3_guess">
              <property name="decimals">
-              <number>3</number>
+              <number>4</number>
              </property>
              <property name="minimum">
               <double>0.001000000000000</double>
@@ -3547,8 +3671,8 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>260</y>
-          <width>280</width>
+          <y>390</y>
+          <width>298</width>
           <height>27</height>
          </rect>
         </property>
@@ -3619,40 +3743,19 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
         <property name="geometry">
          <rect>
           <x>290</x>
-          <y>280</y>
+          <y>390</y>
           <width>168</width>
           <height>28</height>
          </rect>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_50">
-         <item>
-          <widget class="QLabel" name="label_34">
-           <property name="text">
-            <string>MaxFitIterations</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="spinBox_max_Iterations_fit">
-           <property name="minimum">
-            <number>1</number>
-           </property>
-           <property name="maximum">
-            <number>5000</number>
-           </property>
-           <property name="value">
-            <number>50</number>
-           </property>
-          </widget>
-         </item>
-        </layout>
+        <layout class="QHBoxLayout" name="horizontalLayout_50"/>
        </widget>
        <widget class="QWidget" name="layoutWidget_5">
         <property name="geometry">
          <rect>
           <x>250</x>
-          <y>320</y>
-          <width>211</width>
+          <y>430</y>
+          <width>225</width>
           <height>123</height>
          </rect>
         </property>
@@ -3693,7 +3796,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
            <item>
             <widget class="QDoubleSpinBox" name="doubleSpinBox_guess_time_irf_guess">
              <property name="decimals">
-              <number>3</number>
+              <number>4</number>
              </property>
              <property name="minimum">
               <double>0.020000000000000</double>
@@ -3730,7 +3833,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
            <item>
             <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_pos_irf_guess">
              <property name="decimals">
-              <number>3</number>
+              <number>4</number>
              </property>
              <property name="minimum">
               <double>-500.000000000000000</double>
@@ -3782,8 +3885,8 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>10</y>
-          <width>159</width>
+          <y>0</y>
+          <width>169</width>
           <height>54</height>
          </rect>
         </property>
@@ -3816,9 +3919,9 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
        <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
-          <x>156</x>
-          <y>32</y>
-          <width>204</width>
+          <x>170</x>
+          <y>22</y>
+          <width>215</width>
           <height>31</height>
          </rect>
         </property>
@@ -3860,8 +3963,8 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
        <rect>
         <x>5</x>
         <y>6</y>
-        <width>411</width>
-        <height>27</height>
+        <width>566</width>
+        <height>30</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_29">
@@ -3895,35 +3998,29 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_global_load_trpes_sigmas">
+         <property name="toolTip">
+          <string>Load a TRPES file, format see readme</string>
+         </property>
+         <property name="text">
+          <string>Load TRPES_sigmas</string>
+         </property>
+        </widget>
+       </item>
       </layout>
-     </widget>
-     <widget class="GraphicsLayoutWidget" name="viewer_global_fitted">
-      <property name="geometry">
-       <rect>
-        <x>529</x>
-        <y>40</y>
-        <width>441</width>
-        <height>271</height>
-       </rect>
-      </property>
-      <property name="toolTip">
-       <string>Scroll pour zoom, 
-click on 'A' in the lower-left corner to get back
- Dragging the lines of the colobar on the right changes the z-scale
-Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
-      </property>
      </widget>
      <widget class="QTabWidget" name="tabWidget_2">
       <property name="geometry">
        <rect>
-        <x>529</x>
-        <y>320</y>
-        <width>441</width>
+        <x>540</x>
+        <y>450</y>
+        <width>451</width>
         <height>191</height>
        </rect>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab_5">
        <attribute name="title">
@@ -3932,10 +4029,10 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
        <widget class="QTextBrowser" name="textBrowser_global_overview_results">
         <property name="geometry">
          <rect>
-          <x>40</x>
+          <x>10</x>
           <y>10</y>
-          <width>351</width>
-          <height>141</height>
+          <width>431</width>
+          <height>151</height>
          </rect>
         </property>
        </widget>
@@ -3947,10 +4044,10 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
        <widget class="PlotWidget" name="viewer_optimization">
         <property name="geometry">
          <rect>
-          <x>40</x>
+          <x>10</x>
           <y>10</y>
-          <width>351</width>
-          <height>141</height>
+          <width>431</width>
+          <height>151</height>
          </rect>
         </property>
        </widget>
@@ -3962,10 +4059,10 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
        <widget class="PlotWidget" name="viewer_DAS">
         <property name="geometry">
          <rect>
-          <x>50</x>
+          <x>10</x>
           <y>10</y>
-          <width>351</width>
-          <height>141</height>
+          <width>431</width>
+          <height>151</height>
          </rect>
         </property>
        </widget>
@@ -3977,10 +4074,10 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
        <widget class="PlotWidget" name="viewer_DAS_decays">
         <property name="geometry">
          <rect>
-          <x>50</x>
+          <x>10</x>
           <y>10</y>
-          <width>351</width>
-          <height>141</height>
+          <width>431</width>
+          <height>151</height>
          </rect>
         </property>
        </widget>
@@ -3989,10 +4086,10 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
      <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
-        <x>528</x>
-        <y>4</y>
+        <x>540</x>
+        <y>60</y>
         <width>441</width>
-        <height>27</height>
+        <height>30</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_43">
@@ -4028,6 +4125,9 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
        </item>
        <item>
         <widget class="QComboBox" name="comboBox_global_fit_or_residual">
+         <property name="currentIndex">
+          <number>1</number>
+         </property>
          <item>
           <property name="text">
            <string>Fit</string>
@@ -4042,20 +4142,798 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
        </item>
       </layout>
      </widget>
-     <widget class="QPushButton" name="pushButton_global_load_trpes_sigmas">
+     <widget class="QSpinBox" name="spinBox_max_Iterations_fit">
       <property name="geometry">
        <rect>
-        <x>274</x>
-        <y>40</y>
-        <width>141</width>
-        <height>25</height>
+        <x>730</x>
+        <y>30</y>
+        <width>65</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>5000</number>
+      </property>
+      <property name="value">
+       <number>50</number>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_34">
+      <property name="geometry">
+       <rect>
+        <x>629</x>
+        <y>27</y>
+        <width>95</width>
+        <height>26</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>MaxFitIterations</string>
+      </property>
+     </widget>
+     <widget class="GraphicsLayoutWidget" name="viewer_global_fitted">
+      <property name="geometry">
+       <rect>
+        <x>540</x>
+        <y>120</y>
+        <width>451</width>
+        <height>311</height>
        </rect>
       </property>
       <property name="toolTip">
-       <string>Load a TRPES file, format see readme</string>
+       <string>Scroll pour zoom, 
+click on 'A' in the lower-left corner to get back
+ Dragging the lines of the colobar on the right changes the z-scale
+Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_13">
+     <attribute name="title">
+      <string>Global Analysis Uncertainties</string>
+     </attribute>
+     <widget class="QTabWidget" name="tabWidget_global_guess_2">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>30</y>
+        <width>521</width>
+        <height>631</height>
+       </rect>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="TRPES_2">
+       <attribute name="title">
+        <string>Fit parameters overview</string>
+       </attribute>
+       <widget class="GraphicsLayoutWidget" name="viewer_global_unc_TRPES">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>40</y>
+          <width>451</width>
+          <height>311</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>Scroll pour zoom, 
+click on 'A' in the lower-left corner to get back
+ Dragging the lines of the colobar on the right changes the z-scale
+Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
+        </property>
+       </widget>
+       <widget class="QComboBox" name="comboBox_unc_global_fit_or_residual">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>84</width>
+          <height>22</height>
+         </rect>
+        </property>
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <item>
+         <property name="text">
+          <string>Fit</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Original</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Residual</string>
+         </property>
+        </item>
+       </widget>
+       <widget class="QWidget" name="layoutWidget_45">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>430</y>
+          <width>258</width>
+          <height>101</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_32">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_49">
+           <item>
+            <widget class="QLabel" name="label_38">
+             <property name="text">
+              <string>tau_1(ps)</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_tau1_guess_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="decimals">
+              <number>4</number>
+             </property>
+             <property name="minimum">
+              <double>0.001000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>50000.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>1.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>0.120000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="radioButton_tau1_fixed_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>fixed?</string>
+             </property>
+             <property name="autoExclusive">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_132">
+           <item>
+            <widget class="QLabel" name="label_40">
+             <property name="text">
+              <string>tau_2(ps)</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_tau2_guess_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="decimals">
+              <number>4</number>
+             </property>
+             <property name="minimum">
+              <double>0.001000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>50000.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>2.400000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="radioButton_tau2_fixed_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>fixed?</string>
+             </property>
+             <property name="autoExclusive">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_133">
+           <item>
+            <widget class="QLabel" name="label_41">
+             <property name="text">
+              <string>tau_3(ps)</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_tau3_guess_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="decimals">
+              <number>4</number>
+             </property>
+             <property name="minimum">
+              <double>0.001000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>500000.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>3.600000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="radioButton_tau3_fixed_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>fixed?</string>
+             </property>
+             <property name="autoExclusive">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="layoutWidget_48">
+        <property name="geometry">
+         <rect>
+          <x>280</x>
+          <y>430</y>
+          <width>225</width>
+          <height>123</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_33">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_136">
+           <item>
+            <widget class="QLabel" name="label_133">
+             <property name="text">
+              <string>IRF:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_42">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_137">
+           <item>
+            <widget class="QLabel" name="label_134">
+             <property name="text">
+              <string>IRF(ps)</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="doubleSpinBox_guess_time_irf_guess_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="decimals">
+              <number>4</number>
+             </property>
+             <property name="minimum">
+              <double>0.020000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>200.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>0.080000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="radioButton_IRF_fixed_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>fixed?</string>
+             </property>
+             <property name="autoExclusive">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_138">
+           <item>
+            <widget class="QLabel" name="label_135">
+             <property name="text">
+              <string>pos(ps)</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_pos_irf_guess_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="decimals">
+              <number>4</number>
+             </property>
+             <property name="minimum">
+              <double>-500.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>500.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="radioButton_pos_fixed_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>fixed?</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_30">
+           <item>
+            <spacer name="horizontalSpacer_8">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="checkBox_global_floating_t0_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>Calculate t0 for each individual eV trace. Does only work with Fit2! (with Fit! it is ignored)</string>
+             </property>
+             <property name="text">
+              <string>Floating t0?</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="layoutWidget_46">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>370</y>
+          <width>298</width>
+          <height>27</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_134">
+         <item>
+          <widget class="QLabel" name="label_42">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="statusTip">
+            <string>(for the moment sequential up to three time-constans implemented)</string>
+           </property>
+           <property name="text">
+            <string>Pick the Model:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_41">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboBox_global_pick_model_unc">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <item>
+            <property name="text">
+             <string>mono_exp</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>bi_exp</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>tri_exp</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>autocorr</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBox_global_parallel_unc">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>parallel?</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="layoutWidget_41">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>560</y>
+          <width>385</width>
+          <height>30</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_113">
+         <item>
+          <widget class="QRadioButton" name="radioButton_no_offset_unc">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>No Offset</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="radioButton_time_final_offset_unc">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="toolTip">
+            <string>Assumes that the final state is ionizable/has an infinite lifetime.</string>
+           </property>
+           <property name="text">
+            <string>Final offset</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="radioButton_time_offset_unc">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="toolTip">
+            <string>Assumes that there is an indipendant species which just gives an offset.</string>
+           </property>
+           <property name="text">
+            <string>Offset?</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tab_time_4">
+       <attribute name="title">
+        <string>Exploring uncertainties</string>
+       </attribute>
+       <widget class="QTextBrowser" name="textBrowser_global_overview_results_unc">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>450</y>
+          <width>511</width>
+          <height>151</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="PlotWidget" name="viewer_explore_uncertainties">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>140</y>
+          <width>511</width>
+          <height>281</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButton_unc_save_graph_results">
+        <property name="geometry">
+         <rect>
+          <x>330</x>
+          <y>420</y>
+          <width>171</width>
+          <height>28</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Save Graph and Results</string>
+        </property>
+       </widget>
+       <widget class="QWidget" name="layoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>10</y>
+          <width>191</width>
+          <height>26</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_31">
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Value of Confidence</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_value_of_confidence">
+           <property name="minimum">
+            <double>0.100000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>0.990000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.010000000000000</double>
+           </property>
+           <property name="value">
+            <double>0.950000000000000</double>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="layoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>40</y>
+          <width>212</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_32">
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Variable to explore</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboBox_unc_variable_to_explore"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="layoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>400</x>
+          <y>0</y>
+          <width>107</width>
+          <height>83</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QPushButton" name="pushButton_unc_start_exploring">
+           <property name="text">
+            <string>Start Exploring</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_unc_find_limits">
+           <property name="text">
+            <string>Find Limits</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_unc_stop_exploring">
+           <property name="text">
+            <string>Stop!</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="layoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>70</y>
+          <width>169</width>
+          <height>26</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_33">
+         <item>
+          <widget class="QLabel" name="label_25">
+           <property name="text">
+            <string>MaxFitIterator</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinBox_unc_maxFitIterator">
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>50000</number>
+           </property>
+           <property name="value">
+            <number>250</number>
+           </property>
+           <property name="displayIntegerBase">
+            <number>10</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="layoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>110</y>
+          <width>508</width>
+          <height>26</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_34">
+         <item>
+          <widget class="QLabel" name="label_26">
+           <property name="text">
+            <string>From</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_unc_min">
+           <property name="decimals">
+            <number>4</number>
+           </property>
+           <property name="minimum">
+            <double>0.001000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>50000.000000000000000</double>
+           </property>
+           <property name="value">
+            <double>1.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_27">
+           <property name="text">
+            <string>ps to </string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_unc_max">
+           <property name="decimals">
+            <number>4</number>
+           </property>
+           <property name="minimum">
+            <double>0.001000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>50000.000000000000000</double>
+           </property>
+           <property name="value">
+            <double>2.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_28">
+           <property name="text">
+            <string>ps. Number of points</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinBox_unc_num_points">
+           <property name="minimum">
+            <number>2</number>
+           </property>
+           <property name="maximum">
+            <number>50000</number>
+           </property>
+           <property name="displayIntegerBase">
+            <number>10</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </widget>
+     <widget class="QPushButton" name="pushButton_global_get_fitted_TRPES">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>141</width>
+        <height>28</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Get the simulated TRPES from the 'Simulate TRPES' tab</string>
       </property>
       <property name="text">
-       <string>Load TRPES_sigmas</string>
+       <string>Get Fitted TRPES</string>
       </property>
      </widget>
     </widget>
@@ -4074,8 +4952,8 @@ the fit might not converge.</string>
        <rect>
         <x>10</x>
         <y>10</y>
-        <width>437</width>
-        <height>27</height>
+        <width>623</width>
+        <height>30</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_103">
@@ -4109,6 +4987,16 @@ the fit might not converge.</string>
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_global_load_trpes_bidir_sigmas">
+         <property name="toolTip">
+          <string>Load a TRPES file, format see readme</string>
+         </property>
+         <property name="text">
+          <string>Load TRPES_sigmas</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
      <widget class="QTabWidget" name="tabWidget_3">
@@ -4117,11 +5005,11 @@ the fit might not converge.</string>
         <x>10</x>
         <y>40</y>
         <width>461</width>
-        <height>491</height>
+        <height>601</height>
        </rect>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab_11">
        <attribute name="title">
@@ -4133,7 +5021,7 @@ the fit might not converge.</string>
           <x>10</x>
           <y>40</y>
           <width>431</width>
-          <height>311</height>
+          <height>321</height>
          </rect>
         </property>
         <property name="toolTip">
@@ -4148,7 +5036,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <rect>
           <x>10</x>
           <y>10</y>
-          <width>430</width>
+          <width>466</width>
           <height>28</height>
          </rect>
         </property>
@@ -4219,7 +5107,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
         <property name="geometry">
          <rect>
           <x>310</x>
-          <y>360</y>
+          <y>470</y>
           <width>131</width>
           <height>25</height>
          </rect>
@@ -4234,7 +5122,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
         <property name="geometry">
          <rect>
           <x>310</x>
-          <y>390</y>
+          <y>500</y>
           <width>131</width>
           <height>25</height>
          </rect>
@@ -4247,8 +5135,8 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>360</y>
-          <width>263</width>
+          <y>470</y>
+          <width>279</width>
           <height>92</height>
          </rect>
         </property>
@@ -4421,8 +5309,8 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <rect>
           <x>0</x>
           <y>50</y>
-          <width>441</width>
-          <height>192</height>
+          <width>451</width>
+          <height>301</height>
          </rect>
         </property>
        </widget>
@@ -4430,7 +5318,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>250</y>
+          <y>360</y>
           <width>451</width>
           <height>211</height>
          </rect>
@@ -4447,7 +5335,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
            <rect>
             <x>0</x>
             <y>30</y>
-            <width>227</width>
+            <width>258</width>
             <height>111</height>
            </rect>
           </property>
@@ -4464,7 +5352,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
              <item>
               <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_tau1_guess_bidir_pos_2">
                <property name="decimals">
-                <number>3</number>
+                <number>4</number>
                </property>
                <property name="minimum">
                 <double>0.001000000000000</double>
@@ -4504,7 +5392,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
              <item>
               <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_tau2_guess_bidir_pos_2">
                <property name="decimals">
-                <number>3</number>
+                <number>4</number>
                </property>
                <property name="minimum">
                 <double>0.001000000000000</double>
@@ -4541,7 +5429,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
              <item>
               <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_tau3_guess_bidir_pos_2">
                <property name="decimals">
-                <number>3</number>
+                <number>4</number>
                </property>
                <property name="minimum">
                 <double>0.001000000000000</double>
@@ -4615,7 +5503,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
            <rect>
             <x>240</x>
             <y>30</y>
-            <width>200</width>
+            <width>225</width>
             <height>123</height>
            </rect>
           </property>
@@ -4656,7 +5544,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
              <item>
               <widget class="QDoubleSpinBox" name="doubleSpinBox_guess_time_irf_guess_bidir_pos_2">
                <property name="decimals">
-                <number>3</number>
+                <number>4</number>
                </property>
                <property name="minimum">
                 <double>0.020000000000000</double>
@@ -4696,7 +5584,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
              <item>
               <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_pos_irf_guess_bidir_pos_2">
                <property name="decimals">
-                <number>3</number>
+                <number>4</number>
                </property>
                <property name="minimum">
                 <double>-500.000000000000000</double>
@@ -4752,7 +5640,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
            <rect>
             <x>175</x>
             <y>0</y>
-            <width>280</width>
+            <width>298</width>
             <height>27</height>
            </rect>
           </property>
@@ -4823,8 +5711,8 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
           <property name="geometry">
            <rect>
             <x>0</x>
-            <y>30</y>
-            <width>227</width>
+            <y>50</y>
+            <width>258</width>
             <height>98</height>
            </rect>
           </property>
@@ -4841,7 +5729,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
              <item>
               <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_tau1_guess_bidir_min">
                <property name="decimals">
-                <number>3</number>
+                <number>4</number>
                </property>
                <property name="minimum">
                 <double>0.001000000000000</double>
@@ -4881,7 +5769,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
              <item>
               <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_tau2_guess_bidir_min">
                <property name="decimals">
-                <number>3</number>
+                <number>4</number>
                </property>
                <property name="minimum">
                 <double>0.001000000000000</double>
@@ -4918,7 +5806,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
              <item>
               <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_tau3_guess_bidir_min">
                <property name="decimals">
-                <number>3</number>
+                <number>4</number>
                </property>
                <property name="minimum">
                 <double>0.001000000000000</double>
@@ -4948,9 +5836,9 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
          <widget class="QWidget" name="layoutWidget_37">
           <property name="geometry">
            <rect>
-            <x>180</x>
-            <y>0</y>
-            <width>280</width>
+            <x>0</x>
+            <y>10</y>
+            <width>305</width>
             <height>27</height>
            </rect>
           </property>
@@ -5004,6 +5892,19 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
             </widget>
            </item>
            <item>
+            <spacer name="horizontalSpacer_38">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
             <widget class="QCheckBox" name="checkBox_global_bidir_min_parallel">
              <property name="text">
               <string>parallel?</string>
@@ -5016,7 +5917,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
           <property name="geometry">
            <rect>
             <x>0</x>
-            <y>130</y>
+            <y>150</y>
             <width>385</width>
             <height>30</height>
            </rect>
@@ -5059,9 +5960,9 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
        <widget class="QWidget" name="layoutWidget_43">
         <property name="geometry">
          <rect>
-          <x>2</x>
-          <y>4</y>
-          <width>159</width>
+          <x>10</x>
+          <y>0</y>
+          <width>169</width>
           <height>54</height>
          </rect>
         </property>
@@ -5095,8 +5996,8 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
         <property name="geometry">
          <rect>
           <x>170</x>
-          <y>24</y>
-          <width>204</width>
+          <y>20</y>
+          <width>215</width>
           <height>28</height>
          </rect>
         </property>
@@ -5136,9 +6037,9 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
      <widget class="QWidget" name="layoutWidget_39">
       <property name="geometry">
        <rect>
-        <x>526</x>
-        <y>7</y>
-        <width>459</width>
+        <x>550</x>
+        <y>60</y>
+        <width>496</width>
         <height>30</height>
        </rect>
       </property>
@@ -5199,6 +6100,12 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
        </item>
        <item>
         <widget class="QComboBox" name="comboBox_global_fit_or_residual_bidir">
+         <property name="editable">
+          <bool>false</bool>
+         </property>
+         <property name="currentIndex">
+          <number>1</number>
+         </property>
          <item>
           <property name="text">
            <string>Fit</string>
@@ -5216,9 +6123,9 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
      <widget class="QTabWidget" name="tabWidget_bidir">
       <property name="geometry">
        <rect>
-        <x>530</x>
-        <y>320</y>
-        <width>511</width>
+        <x>570</x>
+        <y>440</y>
+        <width>431</width>
         <height>201</height>
        </rect>
       </property>
@@ -5233,9 +6140,9 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>10</y>
-          <width>401</width>
-          <height>151</height>
+          <y>0</y>
+          <width>441</width>
+          <height>171</height>
          </rect>
         </property>
        </widget>
@@ -5247,10 +6154,10 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
        <widget class="PlotWidget" name="viewer_optimization_bidir">
         <property name="geometry">
          <rect>
-          <x>2</x>
-          <y>4</y>
-          <width>391</width>
-          <height>161</height>
+          <x>10</x>
+          <y>0</y>
+          <width>441</width>
+          <height>171</height>
          </rect>
         </property>
        </widget>
@@ -5263,9 +6170,9 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>10</y>
-          <width>381</width>
-          <height>151</height>
+          <y>0</y>
+          <width>441</width>
+          <height>171</height>
          </rect>
         </property>
        </widget>
@@ -5277,10 +6184,10 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
        <widget class="PlotWidget" name="viewer_DAS_decays_bidir">
         <property name="geometry">
          <rect>
-          <x>20</x>
-          <y>10</y>
-          <width>371</width>
-          <height>151</height>
+          <x>10</x>
+          <y>0</y>
+          <width>441</width>
+          <height>171</height>
          </rect>
         </property>
        </widget>
@@ -5289,10 +6196,10 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
      <widget class="GraphicsLayoutWidget" name="viewer_global_fitted_bidir">
       <property name="geometry">
        <rect>
-        <x>527</x>
-        <y>40</y>
-        <width>511</width>
-        <height>271</height>
+        <x>570</x>
+        <y>100</y>
+        <width>441</width>
+        <height>321</height>
        </rect>
       </property>
       <property name="toolTip">
@@ -5302,21 +6209,1050 @@ click on 'A' in the lower-left corner to get back
 Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_global_load_trpes_bidir_sigmas">
+    </widget>
+    <widget class="QWidget" name="tab_20">
+     <attribute name="title">
+      <string>GlobalAnalysis_two dir Uncertainties</string>
+     </attribute>
+     <widget class="QPushButton" name="pushButton_global_get_fitted_TRPES_bidir">
       <property name="geometry">
        <rect>
-        <x>316</x>
-        <y>40</y>
-        <width>131</width>
-        <height>25</height>
+        <x>0</x>
+        <y>10</y>
+        <width>141</width>
+        <height>28</height>
        </rect>
       </property>
       <property name="toolTip">
-       <string>Load a TRPES file, format see readme</string>
+       <string>Get the simulated TRPES from the 'Simulate TRPES' tab</string>
       </property>
       <property name="text">
-       <string>Load TRPES_sigmas</string>
+       <string>Get Fitted TRPES</string>
       </property>
+     </widget>
+     <widget class="QTabWidget" name="tabWidget_global_guess_3">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>40</y>
+        <width>841</width>
+        <height>631</height>
+       </rect>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="TRPES_3">
+       <attribute name="title">
+        <string>Fit parameters overview</string>
+       </attribute>
+       <widget class="GraphicsLayoutWidget" name="viewer_global_unc_TRPES_bidir">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>40</y>
+          <width>451</width>
+          <height>311</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>Scroll pour zoom, 
+click on 'A' in the lower-left corner to get back
+ Dragging the lines of the colobar on the right changes the z-scale
+Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
+        </property>
+       </widget>
+       <widget class="QComboBox" name="comboBox_unc_global_fit_or_residual_bidir">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>84</width>
+          <height>22</height>
+         </rect>
+        </property>
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <item>
+         <property name="text">
+          <string>Fit</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Original</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Residual</string>
+         </property>
+        </item>
+       </widget>
+       <widget class="QTabWidget" name="tabWidget_5">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>360</y>
+          <width>501</width>
+          <height>211</height>
+         </rect>
+        </property>
+        <property name="currentIndex">
+         <number>1</number>
+        </property>
+        <widget class="QWidget" name="tab_21">
+         <attribute name="title">
+          <string>Time positive direction</string>
+         </attribute>
+         <widget class="QWidget" name="layoutWidget_54">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>30</y>
+            <width>258</width>
+            <height>111</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_31">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_144">
+             <item>
+              <widget class="QLabel" name="label_131">
+               <property name="text">
+                <string>tau_1(ps)</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_tau1_guess_bidir_pos_unc">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="decimals">
+                <number>4</number>
+               </property>
+               <property name="minimum">
+                <double>0.001000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>50000.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>1.000000000000000</double>
+               </property>
+               <property name="value">
+                <double>2.120000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="radioButton_tau1_fixed_bidir_pos_unc">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>fixed?</string>
+               </property>
+               <property name="autoExclusive">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_145">
+             <item>
+              <widget class="QLabel" name="label_132">
+               <property name="text">
+                <string>tau_2(ps)</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_tau2_guess_bidir_pos_unc">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="decimals">
+                <number>4</number>
+               </property>
+               <property name="minimum">
+                <double>0.001000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>50000.000000000000000</double>
+               </property>
+               <property name="value">
+                <double>2.400000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="radioButton_tau2_fixed_bidir_pos_unc">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>fixed?</string>
+               </property>
+               <property name="autoExclusive">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_146">
+             <item>
+              <widget class="QLabel" name="label_139">
+               <property name="text">
+                <string>tau_3(ps)</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_tau3_guess_bidir_pos_unc">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="decimals">
+                <number>4</number>
+               </property>
+               <property name="minimum">
+                <double>0.001000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>500000.000000000000000</double>
+               </property>
+               <property name="value">
+                <double>3.600000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="radioButton_tau3_fixed_bidir_pos_unc">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>fixed?</string>
+               </property>
+               <property name="autoExclusive">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="layoutWidget_55">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>150</y>
+            <width>385</width>
+            <height>30</height>
+           </rect>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_147">
+           <item>
+            <widget class="QRadioButton" name="radioButton_no_offset_bidir_pos_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>No Offset</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="radioButton_time_final_offset_bidir_pos_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>Assumes that the final state is ionizable/has an infinite lifetime.</string>
+             </property>
+             <property name="text">
+              <string>Final offset</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="radioButton_time_offset_bidir_pos_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>Assumes that there is an indipendant species which just gives an offset.</string>
+             </property>
+             <property name="text">
+              <string>Offset?</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="layoutWidget_56">
+          <property name="geometry">
+           <rect>
+            <x>240</x>
+            <y>30</y>
+            <width>225</width>
+            <height>123</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_36">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_148">
+             <item>
+              <widget class="QLabel" name="label_140">
+               <property name="text">
+                <string>IRF:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_39">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_149">
+             <item>
+              <widget class="QLabel" name="label_141">
+               <property name="text">
+                <string>IRF(ps)</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QDoubleSpinBox" name="doubleSpinBox_guess_time_irf_guess_bidir_pos_unc">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="decimals">
+                <number>4</number>
+               </property>
+               <property name="minimum">
+                <double>0.020000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>200.000000000000000</double>
+               </property>
+               <property name="value">
+                <double>0.080000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="radioButton_IRF_fixed_bidir_pos_unc">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>fixed?</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+               <property name="autoExclusive">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_150">
+             <item>
+              <widget class="QLabel" name="label_142">
+               <property name="text">
+                <string>pos(ps)</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_pos_irf_guess_bidir_pos_unc">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="decimals">
+                <number>4</number>
+               </property>
+               <property name="minimum">
+                <double>-500.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>500.000000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="radioButton_pos_fixed_bidir_pos_unc">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>fixed?</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_119">
+             <item>
+              <spacer name="horizontalSpacer_10">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="checkBox_global_floating_t0_unc_bidir">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>floating t0?</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="layoutWidget_57">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>298</width>
+            <height>27</height>
+           </rect>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_151">
+           <item>
+            <widget class="QLabel" name="label_143">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="statusTip">
+              <string>(for the moment sequential up to three time-constans implemented)</string>
+             </property>
+             <property name="text">
+              <string>Pick the Model:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_45">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QComboBox" name="comboBox_global_pick_model_bidir_pos_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <item>
+              <property name="text">
+               <string>mono_exp</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>bi_exp</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>tri_exp</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="checkBox_global_bidir_pos_parallel_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>parallel?</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+        <widget class="QWidget" name="tab_22">
+         <attribute name="title">
+          <string>Time negative direction</string>
+         </attribute>
+         <widget class="QWidget" name="layoutWidget_58">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>50</y>
+            <width>258</width>
+            <height>98</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_37">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_152">
+             <item>
+              <widget class="QLabel" name="label_144">
+               <property name="text">
+                <string>tau_1(ps)</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_tau1_guess_bidir_min_unc">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="decimals">
+                <number>4</number>
+               </property>
+               <property name="minimum">
+                <double>0.001000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>50000.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>1.000000000000000</double>
+               </property>
+               <property name="value">
+                <double>2.120000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="radioButton_tau1_fixed_bidir_min_unc">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>fixed?</string>
+               </property>
+               <property name="autoExclusive">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_153">
+             <item>
+              <widget class="QLabel" name="label_145">
+               <property name="text">
+                <string>tau_2(ps)</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_tau2_guess_bidir_min_unc">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="decimals">
+                <number>4</number>
+               </property>
+               <property name="minimum">
+                <double>0.001000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>50000.000000000000000</double>
+               </property>
+               <property name="value">
+                <double>2.400000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="radioButton_tau2_fixed_bidir_min_unc">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>fixed?</string>
+               </property>
+               <property name="autoExclusive">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_154">
+             <item>
+              <widget class="QLabel" name="label_146">
+               <property name="text">
+                <string>tau_3(ps)</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QDoubleSpinBox" name="doubleSpinBox_global_time_tau3_guess_bidir_min_unc">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="decimals">
+                <number>4</number>
+               </property>
+               <property name="minimum">
+                <double>0.001000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>500000.000000000000000</double>
+               </property>
+               <property name="value">
+                <double>3.600000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="radioButton_tau3_fixed_bidir_min_unc">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>fixed?</string>
+               </property>
+               <property name="autoExclusive">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="layoutWidget_59">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>10</y>
+            <width>305</width>
+            <height>27</height>
+           </rect>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_155">
+           <item>
+            <widget class="QLabel" name="label_147">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="statusTip">
+              <string>(for the moment sequential up to three time-constans implemented)</string>
+             </property>
+             <property name="text">
+              <string>Pick the Model:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_46">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QComboBox" name="comboBox_global_pick_model_bidir_min_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <item>
+              <property name="text">
+               <string>mono_exp</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>bi_exp</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>tri_exp</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_47">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="checkBox_global_bidir_min_parallel_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>parallel?</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="layoutWidget_60">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>150</y>
+            <width>385</width>
+            <height>30</height>
+           </rect>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_156">
+           <item>
+            <widget class="QRadioButton" name="radioButton_no_offset_bidir_min_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>No Offset</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="radioButton_time_final_offset_bidir_min_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>Assumes that the final state is ionizable/has an infinite lifetime.</string>
+             </property>
+             <property name="text">
+              <string>Final offset</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="radioButton_time_offset_bidir_min_unc">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>Assumes that there is an indipendant species which just gives an offset.</string>
+             </property>
+             <property name="text">
+              <string>Offset?</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tab_time_5">
+       <attribute name="title">
+        <string>Exploring uncertainties</string>
+       </attribute>
+       <widget class="QTextBrowser" name="textBrowser_global_overview_results_unc_bidir">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>450</y>
+          <width>511</width>
+          <height>151</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="PlotWidget" name="viewer_explore_uncertainties_bidir">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>140</y>
+          <width>511</width>
+          <height>281</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButton_unc_save_graph_results_bidir">
+        <property name="geometry">
+         <rect>
+          <x>330</x>
+          <y>420</y>
+          <width>171</width>
+          <height>28</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Save Graph and Results</string>
+        </property>
+       </widget>
+       <widget class="QWidget" name="layoutWidget_3">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>10</y>
+          <width>191</width>
+          <height>26</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_36">
+         <item>
+          <widget class="QLabel" name="label_29">
+           <property name="text">
+            <string>Value of Confidence</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_value_of_confidence_bidir">
+           <property name="minimum">
+            <double>0.100000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>0.990000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.010000000000000</double>
+           </property>
+           <property name="value">
+            <double>0.950000000000000</double>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="layoutWidget_4">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>40</y>
+          <width>212</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_37">
+         <item>
+          <widget class="QLabel" name="label_30">
+           <property name="text">
+            <string>Variable to explore</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboBox_unc_variable_to_explore_bidir"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="layoutWidget_51">
+        <property name="geometry">
+         <rect>
+          <x>400</x>
+          <y>0</y>
+          <width>107</width>
+          <height>83</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_30">
+         <item>
+          <widget class="QPushButton" name="pushButton_unc_start_exploring_bidir">
+           <property name="text">
+            <string>Start Exploring</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_unc_find_limits_bidir">
+           <property name="text">
+            <string>Find Limits</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_unc_stop_exploring_bidir">
+           <property name="text">
+            <string>Stop!</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="layoutWidget_52">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>70</y>
+          <width>169</width>
+          <height>26</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_38">
+         <item>
+          <widget class="QLabel" name="label_127">
+           <property name="text">
+            <string>MaxFitIterator</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinBox_unc_maxFitIterator_bidr">
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>50000</number>
+           </property>
+           <property name="value">
+            <number>250</number>
+           </property>
+           <property name="displayIntegerBase">
+            <number>10</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="layoutWidget_53">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>110</y>
+          <width>508</width>
+          <height>26</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_48">
+         <item>
+          <widget class="QLabel" name="label_128">
+           <property name="text">
+            <string>From</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_unc_min_bidir">
+           <property name="decimals">
+            <number>4</number>
+           </property>
+           <property name="minimum">
+            <double>0.001000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>50000.000000000000000</double>
+           </property>
+           <property name="value">
+            <double>1.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_129">
+           <property name="text">
+            <string>ps to </string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_unc_max_bidir">
+           <property name="decimals">
+            <number>4</number>
+           </property>
+           <property name="minimum">
+            <double>0.001000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>50000.000000000000000</double>
+           </property>
+           <property name="value">
+            <double>2.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_130">
+           <property name="text">
+            <string>ps. Number of points</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinBox_unc_num_points_bidir">
+           <property name="minimum">
+            <number>2</number>
+           </property>
+           <property name="maximum">
+            <number>50000</number>
+           </property>
+           <property name="displayIntegerBase">
+            <number>10</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
      </widget>
     </widget>
    </widget>
@@ -5326,8 +7262,8 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1152</width>
-     <height>22</height>
+     <width>1131</width>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuAbout">
@@ -5387,7 +7323,7 @@ Right Mouse-click for more options (e.g. log-scale of the time-axis)</string>
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="radiobutton_group_global_time_offset"/>
   <buttongroup name="radiobutton_group_time_offset"/>
+  <buttongroup name="radiobutton_group_global_time_offset"/>
  </buttongroups>
 </ui>

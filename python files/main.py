@@ -24,6 +24,9 @@ from fit_class_bidir_2d import fits_bidir_2d
 
 import json
 from anja_json_decoder import encode_anja,decode_anja
+import time
+
+import scipy.stats as sps
 
 '''
 #defining how floating-points error will be handled
@@ -43,13 +46,13 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         QApplication.restoreOverrideCursor()
         self.initalization_finished=False
         self.dir='home'
-        self.switch_TRPES_axis=False
+        self.switch_TRPES_axis=True
         self.inverse_loading=False
         self.display_log_t=False
         #all variables for simulate TRPES here
         #all variables pe
         self.pe_gauss=[[skewed_gauss(0.0,0.2,0.,1.)],[skewed_gauss(0.0,0.2,0.,1.)],[skewed_gauss(0.0,0.2,0.,1.)],[skewed_gauss(0.0,0.2,0.,1.)]]
-        self.pe_energy_range=np.arange(0.,5.,(5.-0.)/250)
+        self.pe_energy_range=np.arange(0.,5.,(5.-0.)/self.spinBox_simulate_number_energy_points.value())
         self.pe_spectra=[self.pe_gauss[0][0].calculate_gauss(self.pe_energy_range),
                          self.pe_gauss[0][0].calculate_gauss(self.pe_energy_range),
                          self.pe_gauss[0][0].calculate_gauss(self.pe_energy_range),
@@ -76,7 +79,7 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         self.bidir_legends_time=[self.viewer_time_bidir_pos.addLegend(size=(1.,0.1),offset=(-0.4,0.4)),self.viewer_time_bidir_min.addLegend(size=(1.,0.1),offset=(-0.4,0.4))]
         self.pe_gauss_bidir=[[[skewed_gauss(0.0,0.2,0.,1.)],[skewed_gauss(0.0,0.2,0.,1.)],[skewed_gauss(0.0,0.2,0.,1.)],[skewed_gauss(0.0,0.2,0.,1.)]],
                              [[skewed_gauss(0.0,0.2,0.,1.)],[skewed_gauss(0.0,0.2,0.,1.)],[skewed_gauss(0.0,0.2,0.,1.)],[skewed_gauss(0.0,0.2,0.,1.)]]]
-        stepsize=(-self.doubleSpinBox_time_min_bidir_pos.value()+self.doubleSpinBox_time_max_bidir_pos.value())/200.
+        stepsize=(-self.doubleSpinBox_time_min_bidir_pos.value()+self.doubleSpinBox_time_max_bidir_pos.value())/self.spinBox_simulate_number_time_points.value()
         self.time_fit_range_bidir=np.arange(self.doubleSpinBox_time_min_bidir_pos.value(),self.doubleSpinBox_time_max_bidir_pos.value(),stepsize)       
         self.pe_energy_range_bidir=np.arange(0.,5.,(5.-0.)/250.)
         self.default_pe_spectra=skewed_gauss(0.0,0.2,0.,1.).calculate_gauss(self.pe_energy_range_bidir)
@@ -102,6 +105,7 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         self.SVD_reconstructed=None
         self.initialize_SVD_graphs()
         #all variables global analysis
+        self.global_TRPES_sigmas_offset=0.0
         self.global_TRPES=None
         self.global_time=None
         self.global_eV=None
@@ -151,6 +155,17 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         self.global_TRPES_bidir_sigmas=None
         self.global_TRPES_bidir_subtract_bg_limits=None
         
+        #all values concerning the uncertainty tab
+        self.unc_starting_values=[]
+        self.loaded_succ_for_unc=False
+        self.unc_chi2=[]
+        self.unc_var_value=[]
+        #all values concerning the uncertainty tab for bidir fit
+        self.unc_starting_values_bidir=[]
+        self.loaded_succ_for_unc_bidir=False
+        self.unc_chi2_bidir=[]
+        self.unc_var_value_bidir=[]
+        
 
     @pyqtSlot()
     def on_info_triggered(self):
@@ -174,7 +189,14 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
     @pyqtSlot('double')
     def on_doubleSpinBox_max_Energy_PE_valueChanged(self,value):
         #update the energy range
-        self.pe_energy_range=np.arange(0.,value,(value)/250.)
+        self.update_simulate_energy_range()
+    
+    @pyqtSlot('int')
+    def on_spinBox_simulate_number_energy_points_valueChanged(self,value):
+        self.update_simulate_energy_range()
+    def update_simulate_energy_range(self):
+        value=self.doubleSpinBox_max_Energy_PE.value()
+        self.pe_energy_range=np.arange(0.,value,(value)/self.spinBox_simulate_number_energy_points.value())
         self.update_pe_graph()   
         
     @pyqtSlot('int')
@@ -460,11 +482,15 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         self.doubleSpinBox_time_max.blockSignals(False)
         self.update_time_fit_range()
     
+    @pyqtSlot('int')
+    def on_spinBox_simulate_number_time_points_valueChanged(self,value):
+        self.update_time_fit_range()
+    
     def update_time_fit_range(self):
         """
         updating the time_fit_range, make it so that there will be about 200 points
         """
-        stepsize=(self.doubleSpinBox_time_max.value()-self.doubleSpinBox_time_min.value())/200
+        stepsize=(self.doubleSpinBox_time_max.value()-self.doubleSpinBox_time_min.value())/self.spinBox_simulate_number_time_points.value()
         self.time_fit_range=np.arange(self.doubleSpinBox_time_min.value(),self.doubleSpinBox_time_max.value(),stepsize)
         self.update_time_graph()
     
@@ -474,10 +500,11 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
     def update_sim_2D_TRPES(self):
         #calculate the 2D TRPES from the considered components, pe &time
         ones_matrix=np.ones((self.pe_energy_range.shape[0],self.time_fit_range.shape[0]))
-        #print('pe',self.pe_energy_range.shape,'time',self.time_fit_range.shape)
+        print('pe',self.pe_energy_range.shape,'time',self.time_fit_range.shape)
         self.sim_2D_TRPES=np.zeros((self.pe_energy_range.shape[0],self.time_fit_range.shape[0]))
         #sum all the individuals up to make the final thing
         for i in range(self.comboBox_global_pick_model_2.currentIndex()+1):
+            print('shape energy spectrum',self.pe_spectra[i].shape,'time_curve',self.time_curves[i].shape )
             intermed=np.reshape(self.pe_spectra[i],(self.pe_energy_range.shape[0],1))*ones_matrix*self.time_curves[i]
             self.sim_2D_TRPES+=intermed
   
@@ -1000,6 +1027,24 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                 #self.SVD_TRPES=self.SVD_TRPES.transpose()
                 self.plot_TRPES(self.viewer_sim_trpes_SVD,self.SVD_TRPES,self.SVD_time,self.SVD_eV)
                 self.SVD_analysis()
+            elif filename[-3:]=='dat':
+                data=np.loadtxt(filename)
+                eV=data[0,:]
+                z=np.array([data[1,:],data[1,:]])
+                t=np.array([1,2])
+                self.SVD_time,self.SVD_eV,self.SVD_TRPES=t,eV,z
+                self.plot_TRPES(self.viewer_sim_trpes_SVD,self.SVD_TRPES,self.SVD_time,self.SVD_eV)
+                self.SVD_analysis()
+            elif filename[-5:]=='csv_r':
+                data=np.loadtxt(filename)
+                eV=data[1:,0]
+                t=data[0,1:]
+                z=data[1:,1:]/data[1:,1:].max()
+                """
+                if t[0]>t[-1]:
+                    z=np.flip(z,axis=0) 
+                    t=np.flip(t,axis=0)
+                """
             elif filename!='':
                 #load my old data format
                 loaded=np.loadtxt(filename,comments='# ')
@@ -1009,14 +1054,17 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                 
     def load_csv(self,filename):
         data=np.loadtxt(filename,delimiter=',')
-        t=data[1:,0]
-        eV=data[0,1:]
-        print(t[0],eV[0])
-        z=data[1:,1:]
-        if t[0]>t[-1]:
-            z=np.flip(z,axis=0)
-            t=np.flip(t,axis=0)
-        print('first value of x:',t[0])
+        if data.shape[0] > 2:
+            t=data[1:,0]
+            eV=data[0,1:]
+            z=data[1:,1:]
+            if t[0]>t[-1]:
+                z=np.flip(z,axis=0) 
+                t=np.flip(t,axis=0)
+        else:
+            eV=data[0,:]
+            z=np.array([data[1,:],data[1,:]])
+            t=np.array([1,2])
         return t,eV,z
     
     @pyqtSlot()
@@ -1597,6 +1645,53 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             self.global_time_dataset=self.global_time
             self.global_eV_dataset=self.global_eV
             self.global_TRPES_sigmas=None
+        elif filename[-5:]=='csv_r':
+            data=np.loadtxt(filename)
+            t=data[1:,0]/1000.
+            eV=data[0,1:]
+            z=data[1:,1:]
+            self.global_time,self.global_eV,self.global_TRPES=t,eV,z
+            print('the shapes are: z',z.shape, 'eV', eV.shape, 't', t.shape)
+            self.global_TRPES_z_max=self.global_TRPES.max()
+            self.global_TRPES=self.global_TRPES/self.global_TRPES_z_max
+            self.comboBox_global_TRPES_which.blockSignals(True)
+            self.comboBox_global_TRPES_which.clear()
+            self.comboBox_global_TRPES_which.addItem('Original')
+            self.comboBox_global_TRPES_which.setCurrentIndex(0)
+            self.comboBox_global_TRPES_which.blockSignals(False)
+            self.plot_TRPES(self.viewer_global_orig_TRPES,self.global_TRPES,self.global_time,self.global_eV)
+            self.update_global_fit_parameters()
+            self.viewer_global_time_guess_update()
+            self.checkBox_global_subtract_background.setChecked(False)
+            self.initalize_spinboxes_new_dataset()
+            self.global_TRPES_dataset=self.global_TRPES
+            self.global_time_dataset=self.global_time
+            self.global_eV_dataset=self.global_eV
+            self.global_TRPES_sigmas=None
+
+        elif filename[-3:]=='dat':
+            print('loading a dat file!')
+            data=np.loadtxt(filename)
+            eV=np.array([1,2])
+            z=np.transpose(np.array([data[:,1],data[:,1]]))
+            t=data[:,0]/1000
+            self.global_time,self.global_eV,self.global_TRPES=t/1000,eV,z
+            self.global_TRPES_z_max=self.global_TRPES.max()
+            self.global_TRPES=self.global_TRPES/self.global_TRPES_z_max
+            self.comboBox_global_TRPES_which.blockSignals(True)
+            self.comboBox_global_TRPES_which.clear()
+            self.comboBox_global_TRPES_which.addItem('Original')
+            self.comboBox_global_TRPES_which.setCurrentIndex(0)
+            self.comboBox_global_TRPES_which.blockSignals(False)
+            self.plot_TRPES(self.viewer_global_orig_TRPES,self.global_TRPES,self.global_time,self.global_eV)
+            self.update_global_fit_parameters()
+            self.viewer_global_time_guess_update()
+            self.checkBox_global_subtract_background.setChecked(False)
+            self.initalize_spinboxes_new_dataset()
+            self.global_TRPES_dataset=self.global_TRPES
+            self.global_time_dataset=self.global_time
+            self.global_eV_dataset=self.global_eV
+            self.global_TRPES_sigmas=None
         elif filename!='':
             #load my old data format
             loaded=np.loadtxt(filename,comments='# ')
@@ -1628,14 +1723,70 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                 #load the data as a csv file
                 time,eV,sigmas=self.load_csv(filename)
                 sigmas=sigmas/self.global_TRPES_z_max
+                
                 if sigmas.shape[0]==self.global_TRPES.shape[0] and self.global_TRPES.shape[1]==sigmas.shape[1]:
                     self.global_TRPES_sigmas=sigmas
+                    self.global_TRPES_sigmas_offset=0.0
+                    self.doubleSpinBox_min_sigma.setValue(0.0)
                     print('added sigma',self.global_TRPES_sigmas.max(),self.global_TRPES_sigmas.min())
                 else:
                     print('sigmas have a different shape than the loaded TRPES')
+            elif filename[-5:]=='csv_r':
+                data=np.loadtxt(filename)
+                eV=data[1:,0]
+                t=data[0,1:]
+                sigmas=data[1:,1:]/self.global_TRPES_z_max
+                if sigmas.shape[0]==self.global_TRPES.shape[0] and self.global_TRPES.shape[1]==sigmas.shape[1]:
+                    self.global_TRPES_sigmas=sigmas
+                    self.global_TRPES_sigmas_offset=0.0
+                    self.doubleSpinBox_min_sigma.setValue(0.0)
+                    print('added sigma',self.global_TRPES_sigmas.max(),self.global_TRPES_sigmas.min())
+                else:
+                    print('sigmas have a different shape than the loaded TRPES')
+                    
+    @pyqtSlot('int')
+    def on_comboBox_sigma_or_trpes_currentIndexChanged(self,value):
+        if type(self.global_TRPES)!=type(None):
+            if value==0:
+                self.plot_TRPES(self.viewer_global_orig_TRPES,self.global_TRPES,self.global_time,self.global_eV)
+            elif value==1:
+                if type(self.global_TRPES_sigmas)!=type(None):
+                    #plot the sigmas
+                    self.plot_TRPES(self.viewer_global_orig_TRPES,self.global_TRPES_sigmas,self.global_time,self.global_eV)
+            elif value==2:
+                if type(self.global_TRPES_sigmas)!=type(None):
+                    divided=np.divide(self.global_TRPES,self.global_TRPES_sigmas)
+                    np.nan_to_num(divided, copy=False,nan=-0.5,posinf=-0.5,neginf=-0.5)
+                    #plot the sigmas
+                    self.plot_TRPES(self.viewer_global_orig_TRPES,divided,self.global_time,self.global_eV)
+            elif value==3:
+                self.plot_TRPES(self.viewer_global_orig_TRPES,np.sqrt(self.global_TRPES),self.global_time,self.global_eV)
+    
+    @pyqtSlot('bool')            
+    def on_radioButton_sqrt_TRPES_sigmas_toggled(self,value):
+        if type(self.global_TRPES)!=type(None):
+            if value==True:
+                self.global_TRPES_sigmas=np.sqrt(self.global_TRPES)
+                self.global_TRPES_sigmas_offset=0.0
+                self.doubleSpinBox_min_sigma.setValue(0.0)
+            else:
+                self.global_TRPES_sigmas=None
 
-
-        
+    
+    @pyqtSlot('double')
+    def on_doubleSpinBox_min_sigma_valueChanged(self,value):
+        print('double spin box min sigma value changed')
+        if type(self.global_TRPES_sigmas)!=type(None):
+            print('time to change sth')
+            if value!=self.global_TRPES_sigmas_offset:
+                print('do really sth')
+                difference=value-self.global_TRPES_sigmas_offset
+                self.global_TRPES_sigmas+=difference
+                self.global_TRPES_sigmas_offset=value
+                print('offset',self.global_TRPES_sigmas_offset)
+            
+                
+                
     def initalize_spinboxes_new_dataset(self):
         #sets limits time for the currently loaded dataset
         min_value_time=self.global_time.min()
@@ -1945,6 +2096,10 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         '''
         print('calling to plot DAS')
         self.viewer_DAS.clear()
+        try:
+            self.pt0.clear()
+        except:
+            self.pt0=pg.ViewBox()
         #delete the old legend
         self.viewer_global_das_legend=self.viewer_DAS.addLegend(size=(1.,0.1),offset=(-0.4,0.4))
         print('okay')
@@ -1956,35 +2111,69 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         if normed==False:
             max2=0
             min2=0
-            for i,curve in enumerate(self.global_DAS_fitted):
-                print('i',i)
-                print(names)
-                print('color',self.colors[i])
-                self.viewer_DAS.plot(self.global_eV,curve.transpose()[:,0])
-                self.viewer_DAS.plot(self.global_eV,curve.transpose()[:,0],pen=pg.mkPen(self.colors[i],width=2),name=names[i])
-                #plot the uncertainties
-                #print('diagnostics',self.global_eV.shape)
-                #print(curve.transpose().shape)
-                #print(self.global_DAS_deltas[:,i].shape)
-                #errors=pg.ErrorBarItem(x=self.global_eV,y=curve.transpose()[:,0], height=curve.transpose()[:,0]/10, beam=0.5,
-                #    pen=pg.mkPen(self.colors[i],width=2),)
-                #print(type(curve.transpose()[:,0]),curve.transpose()[:,0])
-                #print(type(self.global_DAS_deltas[0,i]))
-                #print(type(curve.transpose()[0,0]))
-                #print(type(self.global_DAS_deltas[:,i]),self.global_DAS_deltas[:,i])
-                #errors=pg.ErrorBarItem(x=self.global_eV,y=curve.transpose()[:,0], height=self.global_DAS_deltas[:,i], beam=0.5,
-                #    pen=pg.mkPen(self.colors[i],width=2),)
-                item1=self.viewer_DAS.plot(self.global_eV,curve.transpose()[:,0]+self.global_DAS_deltas[:,i],brush=None,pen=(50,50,200,0))
-                item2=self.viewer_DAS.plot(self.global_eV,curve.transpose()[:,0]-self.global_DAS_deltas[:,i],brush=None,pen=(50,50,200,0))
+            if self.checkBox_global_floating_t0.isChecked()==False:
+                for i,curve in enumerate(self.global_DAS_fitted):
+                    print('i',i)
+                    print(names)
+                    print('color',self.colors[i])
+                    self.viewer_DAS.plot(self.global_eV,curve.transpose()[:,0])
+                    self.viewer_DAS.plot(self.global_eV,curve.transpose()[:,0],pen=pg.mkPen(self.colors[i],width=2),name=names[i])
+                    item1=self.viewer_DAS.plot(self.global_eV,curve.transpose()[:,0]+self.global_DAS_deltas[:,i],brush=None,pen=(50,50,200,0))
+                    item2=self.viewer_DAS.plot(self.global_eV,curve.transpose()[:,0]-self.global_DAS_deltas[:,i],brush=None,pen=(50,50,200,0))
+                    errors=pg.FillBetweenItem(curve1=item1, curve2=item2, brush=(self.colors[i][0],self.colors[i][1],self.colors[i][2],100), pen=None)
+                    self.viewer_DAS.addItem(errors)                
+                    if np.max(curve)>=max2:
+                        max2=np.max(curve)
+                    if np.min(curve)<=min2:
+                        min2=np.min(curve)
+                    self.viewer_DAS.setXRange(self.global_eV[0],self.global_eV[-1])
+                    self.viewer_DAS.setYRange(min2,max2)
+                    
+            else:
+                #add a second axis to show also the t0 variation!
+                print(type(self.global_DAS_fitted))
+                print('length',len(self.global_DAS_fitted))
+                pDAS=self.viewer_DAS.plotItem    
+                pt0=self.pt0
+                pDAS.showAxis('right')
+                print(type(self.viewer_DAS))
+                pDAS.scene().addItem(pt0)
+                pDAS.getAxis('right').linkToView(pt0)
+                pt0.setXLink(pDAS)
+                pDAS.setLabels(left='DAS intensity')
+                pDAS.getAxis('right').setLabel('t0',units='fs', color='#0000ff')
+                pt0.linkedViewChanged(pDAS.vb, pt0.XAxis)
+                pt0.setGeometry(pDAS.vb.sceneBoundingRect())
+                for i,curve in enumerate(self.global_DAS_fitted[:-1]):
+                    print('i',i)
+                    print(names)
+                    print('color',self.colors[i])
+                    curve=np.array(curve)
+                    self.viewer_DAS.plot(self.global_eV,curve.transpose()[:,0])
+                    self.viewer_DAS.plot(self.global_eV,curve.transpose()[:,0],pen=pg.mkPen(self.colors[i],width=2),name=names[i])
+                    item1=self.viewer_DAS.plot(self.global_eV,curve.transpose()[:,0]+self.global_DAS_deltas[:,i],brush=None,pen=(50,50,200,0))
+                    item2=self.viewer_DAS.plot(self.global_eV,curve.transpose()[:,0]-self.global_DAS_deltas[:,i],brush=None,pen=(50,50,200,0))
+                    errors=pg.FillBetweenItem(curve1=item1, curve2=item2, brush=(self.colors[i][0],self.colors[i][1],self.colors[i][2],100), pen=None)
+                    self.viewer_DAS.addItem(errors)  
+                            
+                pt0.addItem(pg.PlotCurveItem(self.global_eV,1000*self.global_DAS_fitted[-1].transpose()[:,0],pen=pg.mkPen('k',width=2),name='t0'))
+                print('the first few t0 which dont fit',self.global_DAS_fitted[-1].transpose()[:5,0])
+                print('the delta DAS',self.global_DAS_deltas[:,0])
+                testbrush=(self.colors[i][0],self.colors[i][1],self.colors[i][2],100)
+                item1=pg.PlotCurveItem(self.global_eV,1000*(self.global_DAS_fitted[-1].transpose()[:,0]+self.global_DAS_deltas[:,0]),brush=testbrush,pen=(50,50,200,0))
+                item2=pg.PlotCurveItem(self.global_eV,1000*(self.global_DAS_fitted[-1].transpose()[:,0]-self.global_DAS_deltas[:,0]),brush=testbrush,pen=(50,50,200,0))
                 errors=pg.FillBetweenItem(curve1=item1, curve2=item2, brush=(self.colors[i][0],self.colors[i][1],self.colors[i][2],100), pen=None)
-                self.viewer_DAS.addItem(errors)
+                pt0.addItem(item1)
+                pt0.addItem(item2)
+                pt0.addItem(errors) 
                 
-                if np.max(curve)>=max2:
-                    max2=np.max(curve)
-                if np.min(curve)<=min2:
-                    min2=np.min(curve)
-            self.viewer_DAS.setXRange(self.global_eV[0],self.global_eV[-1])
-            self.viewer_DAS.setYRange(min2,max2)
+                
+                
+                
+
+
+
+                
         else:
             print('jodidoo')
             
@@ -2010,6 +2199,23 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         except Exception as e:
             pass
         """
+        #plot the experimental sum thing
+        if self.checkBox_global_time_display_all.isChecked()==True:
+            temp_global=np.mean(self.global_TRPES,axis=1)
+        else:
+            #sum over the given limits
+            idx1=self.find_nearest_index(self.global_eV,self.doubleSpinBox_global_time_display_from.value())
+            idx2=self.find_nearest_index(self.global_eV,self.doubleSpinBox_global_time_display_to.value())
+            if idx1>idx2:
+                temp_global=np.mean(self.global_TRPES[:,idx2:idx1+1],axis=1)
+            elif idx2>idx1:
+                temp_global=np.mean(self.global_TRPES[:,idx1:idx2+1],axis=1)
+            elif idx2==idx1:
+                temp_global=self.global_TRPES[:,idx1]
+        max_for_norm=max(np.abs(temp_global))
+        if max_for_norm==0.:
+            max_for_norm=1
+        self.viewer_DAS_decays.plot(self.global_time,temp_global/max_for_norm, symbolPen='w')
         self.viewer_global_decays_legend=self.viewer_DAS_decays.addLegend(size=(1.,0.1),offset=(-0.4,0.4))
         names=['mono-exp','bi-exp','tri-exp'][:len(self.global_DAS_fitted)]
         if self.comboBox_global_pick_model.currentIndex()==3:
@@ -2052,18 +2258,38 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                 text+='{:.4f}'.format(self.global_params_from_fit[0][1][i])+unit+'\n'
             else:
                 text+=str(self.global_params_from_fit[0][1][i])+unit+'\n'
+        if self.checkBox_global_floating_t0.isChecked()==True:
+            text+='floating t0:\n'
+            print(type(self.global_DAS_fitted[-1]))
+            print('okay,shape?',self.global_DAS_fitted[-1].shape)
+            for i,floating_t0 in enumerate(self.global_DAS_fitted[-1].transpose()[:,0]): 
+                text+=str(floating_t0)+'+-'+str(self.global_DAS_deltas[i,-1])+' fs\n'
         text+='fixed values:\n'
         h=0
         for i in range(len(self.global_params_from_fit[3])):
             if 'time_offset' in self.global_params_from_fit[3][i] and h==0:
-                if self.checkBox_global_floating_t0.isChecked()==True:
+                if self.checkBox_global_floating_t0.isChecked()==False and self.radioButton_pos_fixed.isChecked()==True:
                     text+=self.global_params_from_fit[3][i]+'=variable\n'
-                elif 'time_offset' not in text:
-                    text+=self.global_params_from_fit[3][i]+'='+str(self.global_params_from_fit[4][i])+'\n'
+                #elif 'time_offset' not in text:
+                #    text+=self.global_params_from_fit[3][i]+'='+str(self.global_params_from_fit[4][i])+'\n'
                 h=1
             if 'moy' not in self.global_params_from_fit[3][i] and 'time_offset' not in self.global_params_from_fit[3][i]:
                 text+=self.global_params_from_fit[3][i]+'='+str(self.global_params_from_fit[4][i])+'\n'
+                
+        text+='\n_________________________________\n'
+        text+='Initial values:\n'
+        text+='Fitted values:\n'
+        for n in range(len(self.global_TRPES_fit_initial_values['values_to_be_fitted'])):
+            text+=self.global_TRPES_fit_initial_values['values_to_be_fitted_what'][n]+': '+str(self.global_TRPES_fit_initial_values['values_to_be_fitted'][n])+'\n'
+        text+='Fixed values:\n'
+        for n in range(len(self.global_TRPES_fit_initial_values['fixed_values'])):
+            text+=self.global_TRPES_fit_initial_values['fixed_values_what'][n]+': '+str(self.global_TRPES_fit_initial_values['fixed_values'][n])+'\n'
+        text+='\n_________________________________\n'
+        text+='Evolution of Chi**2\n'
+        for n, chi in enumerate(self.test_fit.reporter):
+            text+='Chi**2 of Iteration '+str(n)+': '+str(chi)+'\n'
         self.textBrowser_global_overview_results.setText(text)
+        self.unc_starting_values.append(text)
 
 
     @pyqtSlot()
@@ -2106,14 +2332,36 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                 data[:,i*2+1]=decay
             np.savetxt(filename+'.decay',data,header=header)
             #save the DAS stuff            
-            data=np.zeros((self.global_eV_for_fit.shape[0],len(self.global_DAS_fitted)*3+1))
-            header='all DAS are saved in xy format\nthe last line corresponds to the time zeros of the xyz array\n'
-            for i,DAS in enumerate(self.global_DAS_fitted):
-                data[:,i*2]=self.global_eV_for_fit
-                data[:,i*2+1]=DAS
-                data[:,i*3+1]=self.global_DAS_deltas[:,i]
-            data[:,-1]=self.global_t0
-            np.savetxt(filename+'.DAS',data)
+            
+            if self.checkBox_global_floating_t0.isChecked()==False:
+                data=np.zeros((self.global_eV_for_fit.shape[0],len(self.global_DAS_fitted)*3+1))
+                header='all DAS are saved in xy format\nthe last line corresponds to the time zeros of the xyz array\n'
+                print('data for DAS shape',data.shape)
+                print('global DAS fitted shape',self.global_DAS_deltas.shape)
+                for i,DAS in enumerate(self.global_DAS_fitted):
+                    data[:,i*3]=self.global_eV_for_fit
+                    data[:,i*3+1]=DAS
+                    data[:,i*3+2]=np.atleast_2d(self.global_DAS_deltas[:,i])
+                    print(i)
+                    #print(self.global_DAS_deltas.shape)
+                    #print('these are the DAS',self.global_DAS_deltas[:,i])
+                data[:,-1]=self.global_t0
+                np.savetxt(filename+'.DAS',data)
+            else:
+                data=np.zeros((self.global_eV_for_fit.shape[0],len(self.global_DAS_fitted)*3+1))
+                header='all DAS are saved in xy format\nthe last two lines correspond to the time zeros and deltas of the xyz array\n'
+                print('data for DAS shape',data.shape)
+                print('global DAS fitted shape',self.global_DAS_deltas.shape)
+                for i,DAS in enumerate(self.global_DAS_fitted[:-1]):
+                    data[:,i*3]=self.global_eV_for_fit
+                    data[:,i*3+1]=DAS
+                    data[:,i*3+2]=np.atleast_2d(self.global_DAS_deltas[:,i+1])
+                    print(i)
+                    #print(self.global_DAS_deltas.shape)
+                    #print('these are the DAS',self.global_DAS_deltas[:,i])
+                data[:,-2]=self.global_DAS_fitted[-1]
+                data[:,-1]=self.global_DAS_deltas[:,0]
+                np.savetxt(filename+'.DAS',data)
             #save the text overview stuff
             file=open(filename+'_overview.txt','w')
             text=self.textBrowser_global_overview_results.toPlainText()
@@ -2321,11 +2569,11 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             print('flip the time-axis for the sigmas!')
             global_TRPES_sigmas=np.flip(global_TRPES_sigmas,axis=1)
         #check whether background was subtracted:
-        if checkBox_global_subtract_background.isChecked()==True:
-            print('subtract the background for the sigmas')
-            #calculate the sigmas for the averaged part
-            average_sigmas=np.sqrt(np.sum(np.power(global_TRPES_sigmas[:,global_TRPES_subtract_bg_limits[0]:global_TRPES_subtract_bg_limits[1]],2),axis=1))
-            global_TRPES_sigmas=np.sqrt(np.power(global_TRPES_sigmas,2).transpose()+np.power(average_sigmas,2)).transpose()
+        #if checkBox_global_subtract_background.isChecked()==True:
+        #    print('subtract the background for the sigmas')
+        #    #calculate the sigmas for the averaged part
+        #    average_sigmas=np.sqrt(np.sum(np.power(global_TRPES_sigmas[:,global_TRPES_subtract_bg_limits[0]:global_TRPES_subtract_bg_limits[1]],2),axis=1))
+        #    global_TRPES_sigmas=np.sqrt(np.power(global_TRPES_sigmas,2).transpose()+np.power(average_sigmas,2)).transpose()
         #check whether it is on a part or the whole one and slice the global_TRPES_sigmas
         if comboBox_global_TRPES_which.currentIndex()==1:
             print('cut and slice for the sigmas', global_TRPES_sliced_for_new_dataset)
@@ -2380,6 +2628,8 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                 factors.append(np.max(curve/np.max(summed_decay)))
             test_fit,values_to_be_fitted,values_to_be_fitted_what,fixed_values,fixed_values_what=self.construct_2D_object_for_fitmethod2(TRPES,factors)
             #choosing the fitmodel
+            self.global_TRPES_fit_initial_values={'values_to_be_fitted':values_to_be_fitted,'values_to_be_fitted_what':values_to_be_fitted_what,
+                                                  'fixed_values':fixed_values,'fixed_values_what':fixed_values_what}
             fit_function,fit_func_interm,fit_func_interm_what=self.which_model_picked_for_fitmethod2(test_fit)
             #making tfit and yfit
             tfit=[]
@@ -2402,6 +2652,12 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                               args=(values_to_be_fitted_what,fit_function,tfit,yfit,
                                     fit_func_interm,fit_func_interm_what,self.checkBox_global_floating_t0.isChecked(),self.checkBox_global_parallel.isChecked(),sigmas),
                                     full_output=True,maxfev=self.spinBox_max_Iterations_fit.value())
+            self.unc_starting_values=[plsq,test_fit,values_to_be_fitted,values_to_be_fitted_what,
+                                      fit_function,tfit,yfit,fit_func_interm,fit_func_interm_what,
+                                      self.checkBox_global_floating_t0.isChecked(),self.checkBox_global_parallel.isChecked(),sigmas]
+            print('cov',cov)
+            DAS_plsqs,DAS_deltas=test_fit.get_deltas_DAS(plsq,tfit,yfit,fit_func_interm,fit_func_interm_what, self.checkBox_global_parallel.isChecked(),sigmas=sigmas)
+            #print(test_fit.time_offset)
             #sweet! Now update/get incertituted all the other stuff
             t2=t+test_fit.time_offset[0]
             test_fit.ptot_function(plsq,values_to_be_fitted_what)
@@ -2411,10 +2667,11 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
             self.global_DAS_fitted=[]
             self.global_decays_fitted=[]
             #get the uncertainties for the DAS:
-            DAS_plsqs,DAS_deltas=test_fit.get_deltas_DAS(plsq,tfit,yfit,fit_func_interm,fit_func_interm_what, self.checkBox_global_parallel.isChecked(),sigmas=sigmas)
             print('executed it?', len(DAS_plsqs),len(DAS_plsqs[0]),len(DAS_deltas),len(DAS_deltas[0]))
+            print('deltas DAS', DAS_plsqs[0],DAS_plsqs[-1])
+            print('deltas DAS', DAS_deltas[0],DAS_deltas[-1])
             DAS_deltas=np.array(DAS_deltas)
-            self.global_DAS_deltas=DAS_deltas
+            self.global_DAS_deltas=np.atleast_2d(DAS_deltas)
             if index_model==3:
                 self.global_DAS_fitted.append(np.atleast_2d(np.array(test_fit.sigma_1)))
                 decay=test_fit.fct_auto_corr(t2,0)
@@ -2490,6 +2747,7 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                     for n in range(eV.shape[0]):
                         self.global_TRPES_fitted[n,:]=fit_func_interm(times[n,:],n)
                     self.global_TRPES_fitted[0,:]=np.zeros(times[0,:].shape)
+                    self.global_DAS_fitted.append(np.atleast_2d(test_fit.time_offset))
                     #self.global_TRPES_fitted[0,:]=fit_func_interm(np.zeros(times[0,:].shape),0)
             self.global_t0=test_fit.time_offset            
             self.global_TRPES_fitted=self.global_TRPES_fitted.transpose()
@@ -3124,11 +3382,11 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         returns a list of arrays [(array of time-slice),...]
         '''
         #check whether background was subtracted:
-        if checkBox_global_subtract_background.isChecked()==True:
-            print('subtract the background for the sigmas')
-            #calculate the sigmas for the averaged part
-            average_sigmas=np.sqrt(np.sum(np.power(global_TRPES_sigmas[:,global_TRPES_subtract_bg_limits[0]:global_TRPES_subtract_bg_limits[1]],2),axis=1))
-            global_TRPES_sigmas=np.sqrt(np.power(global_TRPES_sigmas,2).transpose()+np.power(average_sigmas,2)).transpose()
+        #if checkBox_global_subtract_background.isChecked()==True:
+        #    print('subtract the background for the sigmas')
+        #    #calculate the sigmas for the averaged part
+        #    average_sigmas=np.sqrt(np.sum(np.power(global_TRPES_sigmas[:,global_TRPES_subtract_bg_limits[0]:global_TRPES_subtract_bg_limits[1]],2),axis=1))
+        #    global_TRPES_sigmas=np.sqrt(np.power(global_TRPES_sigmas,2).transpose()+np.power(average_sigmas,2)).transpose()
         #check whether it is on a part or the whole one and slice the global_TRPES_sigmas
         if comboBox_global_TRPES_which.currentIndex()==1:
             print('cut and slice for the sigmas', global_TRPES_sliced_for_new_dataset)
@@ -3163,6 +3421,10 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                 for n in range(self.global_TRPES_bidir.shape[1]):
                     sigmas.append(None)
             #fitting it!
+            self.global_TRPES_fit_initial_values={'values_to_be_fitted_what': values_to_fit_what,
+                                                  'values_to_fit':values_to_fit,
+                                                  'values_fixed':values_fixed,
+                                                  'values_fixed_what':values_fixed_what}
             #print('sigmas main',sigmas,type(sigmas))
             plsq,cov,info,msg,ier=leastsq(self.global_fit_bidir_2d.fit_function,values_to_fit,
                           args=(values_to_fit_what,function_pos,function_min,tfit,yfit,self.checkBox_global_bidir_floating_t0.isChecked(),
@@ -3182,6 +3444,14 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                                                                        self.checkBox_global_bidir_min_parallel.isChecked(),
                                                                          sigmas)
             #print('executed it?', len(DAS_plsqs),len(DAS_plsqs[0]),len(DAS_deltas),len(DAS_deltas[0]))
+            self.unc_starting_values_bidir=[plsq,self.global_fit_bidir_2d,
+                                      values_to_fit,values_to_fit_what,
+                                      function_pos,function_min,
+                                      tfit,yfit,
+                                      self.checkBox_global_bidir_floating_t0.isChecked(),
+                                      self.checkBox_global_bidir_pos_parallel.isChecked(),
+                                      self.checkBox_global_bidir_min_parallel.isChecked(),
+                                      sigmas]
             DAS_deltas=np.array(DAS_deltas)
             self.global_DAS_bidir_deltas=DAS_deltas
             #get the DAS out+plot them
@@ -3258,8 +3528,21 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         for i, value in enumerate(values_fixed):
             if values_fixed_what[i]!='time_offset':
                 text+=values_fixed_what[i]+'='+'{:.4f}'.format(value)+unit+'\n'
-    
+        text+='\n_________________________________\n'
+        text+='Initial values:\n'
+        text+='Fitted values:\n'
+        for n in range(len(self.global_TRPES_fit_initial_values['values_to_fit'])):
+            text+=self.global_TRPES_fit_initial_values['values_to_be_fitted_what'][n]+': '+str(self.global_TRPES_fit_initial_values['values_to_fit'][n])+'\n'
+        text+='Fixed values:\n'
+        for n in range(len(self.global_TRPES_fit_initial_values['values_fixed'])):
+            text+=self.global_TRPES_fit_initial_values['values_fixed_what'][n]+': '+str(self.global_TRPES_fit_initial_values['values_fixed'][n])+'\n'
+        text+='\n_________________________________\n'
+        text+='Evolution of Chi**2\n'
+        for n, chi in enumerate(self.global_fit_bidir_2d.reporter):
+            text+='Chi**2 of Iteration '+str(n)+': '+str(chi)+'\n'
         self.textBrowser_global_overview_results_bidir.setText(text)
+        self.unc_starting_values_bidir.append(text)
+        print('jo')
 
     def update_reporter_bidir(self):
         if self.global_fit_bidir_2d.reporter!=[]:
@@ -3357,7 +3640,7 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                 #print(type(curve[0]),type(self.global_DAS_bidir_deltas[0,i]))
                 #print(self.global_DAS_bidir_deltas)
                 #np.savetxt('control',self.global_DAS_bidir_deltas)
-                y=curve+self.global_DAS_bidir_deltas[:,i]
+                #y=curve+self.global_DAS_bidir_deltas[:,i]
                 #print('diagnostics',type(y))
                 item1=self.viewer_DAS_bidir.plot(self.global_eV_bidir,curve+self.global_DAS_bidir_deltas[:,i],brush=None,pen=(50,50,200,100))
                 item2=self.viewer_DAS_bidir.plot(self.global_eV_bidir,curve-self.global_DAS_bidir_deltas[:,i],brush=None,pen=(50,50,200,100))
@@ -3460,7 +3743,7 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                 for i,curve in enumerate(self.global_DAS_bidir[n]):
                     data[:,k*3]=self.global_eV_bidir
                     data[:,k*3+1]=curve
-                    data[:,k*3+1]=self.global_DAS_bidir_deltas[:,f]
+                    data[:,k*3+2]=self.global_DAS_bidir_deltas[:,f]
                     k+=1
                     f+=1
             np.savetxt(filename+'.DAS',data)
@@ -3485,6 +3768,850 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
                 
             elif value==1:
                 self.plot_TRPES(self.viewer_global_fitted_bidir,self.global_TRPES_residual_bidir,self.global_time_bidir_fitted,self.global_eV_bidir)
+
+
+
+    @pyqtSlot()
+    def on_pushButton_global_get_fitted_TRPES_clicked(self):
+        #load all the parameters etc if there was a successful fit beforehand
+        if self.unc_starting_values!=[]:
+            """
+            self.unc_starting_values=[plsq,test_fit, 0 1
+                                      values_to_be_fitted,values_to_be_fitted_what, 2 3
+                                      fit_function,tfit, 4 5
+                                      yfit,fit_func_interm, 6 7
+                                      fit_func_interm_what, 8
+                                      self.checkBox_global_floating_t0.isChecked(),self.checkBox_global_parallel.isChecked(), 9 10
+                                      sigmas] 11
+            """
+            #select the model
+            if 'mono_exp' in self.unc_starting_values[8]:
+                self.comboBox_global_pick_model_unc.setCurrentIndex(0)
+            elif 'bi_exp' in self.unc_starting_values[8]:
+                self.comboBox_global_pick_model_unc.setCurrentIndex(1)
+            elif 'tri_exp' in self.unc_starting_values[8]:
+                self.comboBox_global_pick_model_unc.setCurrentIndex(2)
+            else:
+                self.comboBox_global_pick_model_unc.setCurrentIndex(3)
+            self.checkBox_global_parallel_unc.setChecked(self.unc_starting_values[10])
+            #set the taus to whatever was in the test_fit
+            self.doubleSpinBox_global_time_tau1_guess_unc.setValue(self.unc_starting_values[1].tau1)
+            self.doubleSpinBox_global_time_tau2_guess_unc.setValue(self.unc_starting_values[1].tau2)
+            self.doubleSpinBox_global_time_tau3_guess_unc.setValue(self.unc_starting_values[1].tau3)
+            self.doubleSpinBox_guess_time_irf_guess_unc.setValue(self.unc_starting_values[1].fwhm[0])
+            self.doubleSpinBox_global_time_pos_irf_guess_unc.setValue(self.unc_starting_values[1].time_offset[0])
+            #radioboxes
+            self.comboBox_unc_variable_to_explore.clear()
+            spinboxes=[self.radioButton_tau1_fixed_unc,self.radioButton_tau2_fixed_unc,self.radioButton_tau3_fixed_unc,
+                       self.radioButton_IRF_fixed_unc,self.radioButton_pos_fixed_unc]
+            for s in spinboxes:
+                s.setChecked(True)
+            for value in self.unc_starting_values[3]:
+                print('value to add',value)
+                if value=='tau1':
+                    self.radioButton_tau1_fixed_unc.setChecked(False)
+                    self.comboBox_unc_variable_to_explore.addItem('tau1')
+                elif value=='tau2':
+                    self.radioButton_tau2_fixed_unc.setChecked(False)
+                    self.comboBox_unc_variable_to_explore.addItem('tau2')
+                elif value=='tau3':
+                    self.radioButton_tau3_fixed_unc.setChecked(False)
+                    self.comboBox_unc_variable_to_explore.addItem('tau3')
+                elif value=='fwhm':
+                    self.radioButton_IRF_fixed_unc.setChecked(False)
+                    self.comboBox_unc_variable_to_explore.addItem('fwhm')
+                elif value=='time_offset':
+                    self.radioButton_pos_fixed_unc.setChecked(False)
+                    self.comboBox_unc_variable_to_explore.addItem('time_offset')
+            #checking whether t0 was variable
+            if self.checkBox_global_floating_t0.isChecked()==True:
+                self.checkBox_global_floating_t0_unc.setChecked(True)
+                self.radioButton_pos_fixed_unc.setChecked(False)                
+            #getting the offset etc
+            if self.radioButton_no_offset_2.isChecked()==True:
+                self.radioButton_no_offset_unc.setChecked(True)
+            elif self.radioButton_time_final_offset_2.isChecked()==True:
+                self.radioButton_time_final_offset_unc.setChecked(True)
+            else:
+                self.radioButton_time_final_offset_unc.setChecked(True)
+            self.loaded_succ_for_unc=True
+            #plotting the TRPES
+            self.comboBox_unc_global_fit_or_residual.setCurrentIndex(1)
+            self.comboBox_unc_global_fit_or_residual.setCurrentIndex(0)
+        pass
+    
+    @pyqtSlot('int')
+    def on_comboBox_unc_global_fit_or_residual_currentIndexChanged(self,value):
+        print(value)
+        if self.loaded_succ_for_unc==True:
+            print("was here")
+            if value==0:  
+                print(value)
+                self.plot_TRPES(self.viewer_global_unc_TRPES,self.global_TRPES_fitted,self.global_t_for_fit,self.global_eV_for_fit)
+                print('max',np.max(self.global_TRPES),'min',np.min(self.global_TRPES))
+            elif value==1: 
+                print(value)
+                self.plot_TRPES(self.viewer_global_unc_TRPES,self.global_TRPES,self.global_time,self.global_eV)
+                print('max',np.max(self.global_TRPES),'min',np.min(self.global_TRPES))
+            elif value==2:
+                print(value)
+                self.plot_TRPES(self.viewer_global_unc_TRPES,self.global_TRPES_residual,self.global_t_for_fit,self.global_eV_for_fit)
+                print('max',np.max(self.global_TRPES_residual),'min',np.min(self.global_TRPES_residual))
+        pass
+    
+    @pyqtSlot()
+    def on_pushButton_unc_start_exploring_clicked(self):
+        self.stop_flag=False
+        if self.loaded_succ_for_unc==True:
+        #now do the stuff in a loop as long as the user hasen't clicked stop!
+            """
+            self.unc_starting_values=[plsq,test_fit, 0 1
+                                      values_to_be_fitted,values_to_be_fitted_what, 2 3
+                                      fit_function,tfit, 4 5
+                                      yfit,fit_func_interm, 6 7
+                                      fit_func_interm_what, 8
+                                      self.checkBox_global_floating_t0.isChecked(),self.checkBox_global_parallel.isChecked(), 9 10
+                                      sigmas] 11
+            """ 
+            self.unc_chi2=[]
+            self.unc_var_value=[]
+            #current degrees of freedom: size of fitted TRPES - fitting parameters*len(TRPES)
+            number_of_points=self.global_TRPES_fitted.shape[0]*self.global_TRPES_fitted.shape[1]
+            #parameters that are fitted: sigma_1,sigma_2,sigma3,sigma_offset for each time_trace
+            #tau1,tau2,tau3,IRF globally
+            #IRF globally
+            #This means that for each energy slice I have to subtract 1 per exp (1 for mono-exp, 2 for bi-exp...) corresponding to the sigmas
+            #and then 1 each additional for the IRF/pos, taus
+            #note: if you fix a parameter, it doesn't reduce the degrees of freedoms! So basically
+            #I will always take stuff off for the sigmas, and then one for the taus/fwhm/pos
+            if self.comboBox_global_pick_model_unc.currentIndex()!=3:
+                parameters_fixed_original_fit=self.global_TRPES_fitted.shape[1]*(self.comboBox_global_pick_model_unc.currentIndex()+1)
+            else:
+                #assuming the autocorr function was chosen:
+                parameters_fixed_original_fit=self.global_TRPES_fitted.shape[1]
+            #if t0 floating
+            if self.checkBox_global_floating_t0_unc.isChecked()==True:
+                parameters_fixed_original_fit+=self.global_TRPES_fitted.shape[1]
+            #if there is an offset, there is another sigma, sigma_offset which is added as well
+            if self.radioButton_no_offset_unc.isChecked()==False:
+                parameters_fixed_original_fit+=self.global_TRPES_fitted.shape[1]
+            #now add one for each of the parameters that you can explore
+            parameters_fixed_original_fit+=self.comboBox_unc_variable_to_explore.count()
+            deg_freedom=number_of_points-parameters_fixed_original_fit
+            #current degrees of freedoms 2: number of eV points + fitting parameters
+            print('degrees of freedom',deg_freedom)
+            print('degrees of freedom one more value fixed',deg_freedom-1*self.global_TRPES_fitted.shape[1])
+            #get the f-value for the current degrees of freedom
+            f_value=self.get_f_value(self.doubleSpinBox_value_of_confidence.value(),deg_freedom,deg_freedom-1*self.global_TRPES_fitted.shape[1])
+            print('f_value',f_value)
+            #the reporter value is the sqrt of the chi_square. Need to square it therefore!
+            chi_square_minimum=np.power(self.unc_starting_values[1].reporter[-1],2)
+            chi_square_thr=chi_square_minimum*f_value
+            #let's first search just in the area of +-20%
+            value_to_be_explored=self.comboBox_unc_variable_to_explore.currentText()
+            optimal_value=self.unc_starting_values[0][self.unc_starting_values[3].index(value_to_be_explored)]
+            self.prepare_uncertainties_plot(value_to_be_explored,optimal_value,chi_square_thr,chi_square_minimum)
+            #let's go for 5 points in each direction
+            values_to_list=np.linspace(self.doubleSpinBox_unc_min.value(),self.doubleSpinBox_unc_max.value(),self.spinBox_unc_num_points.value())
+            #problem is the line before! need to create bigger array!!!!
+            #start things
+            values_to_be_fitted=copy.deepcopy(self.unc_starting_values[0]).tolist()
+            values_to_be_fitted.remove(optimal_value)
+            values_to_be_fitted=np.array(values_to_be_fitted)
+            print('values now',values_to_be_fitted)
+            values_to_be_fitted_what=copy.deepcopy(self.unc_starting_values[3])
+            values_to_be_fitted_what.remove(value_to_be_explored)
+            print('values now what',values_to_be_fitted_what)
+            test_fit=copy.deepcopy(self.unc_starting_values[1])
+            test_fit.reporter=[]
+            self.plotter_unc_plot()
+            for value in values_to_list:
+                print('next value',value)
+                if self.stop_flag==False:
+                    #set the starting value
+                    test_fit.ptot_function([value],[value_to_be_explored])
+                    test_fit.reporter=[]
+                    #fit it
+                    print('test_fit_values',test_fit.tau1)
+                    print('t0 floating?',self.unc_starting_values[8])
+                    plsq,cov,info,msg,ier=leastsq(test_fit.fit_function,values_to_be_fitted,
+                                                  args=(values_to_be_fitted_what,self.unc_starting_values[4],
+                                                        self.unc_starting_values[5],self.unc_starting_values[6],
+                                                        self.unc_starting_values[7],self.unc_starting_values[8],
+                                                        self.unc_starting_values[9],self.unc_starting_values[10],
+                                                        self.unc_starting_values[11]),
+                                                        full_output=True,maxfev=self.spinBox_unc_maxFitIterator.value())
+                    #add the opt. chi to the list
+                    self.unc_chi2.append(np.power(test_fit.reporter[-1],2))
+                    self.unc_var_value.append(value)
+                    #update the graph
+                    #self.plot_explored_incertainties(optimal_value,chi_square_thr,chi_square_minimum)
+                    QApplication.processEvents()
+                else:
+                    break
+                print('test')
+          
+    @pyqtSlot()
+    def on_pushButton_unc_find_limits_clicked(self):
+        """
+        automatically find the limits! (Or die trying)
+        """
+        self.stop_flag=False
+        if self.loaded_succ_for_unc==True:
+        #now do the stuff in a loop as long as the user hasen't clicked stop!
+            """
+            self.unc_starting_values=[plsq,test_fit, 0 1
+                                      values_to_be_fitted,values_to_be_fitted_what, 2 3
+                                      fit_function,tfit, 4 5
+                                      yfit,fit_func_interm, 6 7
+                                      fit_func_interm_what, 8
+                                      self.checkBox_global_floating_t0.isChecked(),self.checkBox_global_parallel.isChecked(), 9 10
+                                      sigmas,overview_text] 11,12
+            """ 
+            print('testing with the reduced chi2')
+            self.unc_chi2=[]
+            self.unc_var_value=[]
+            #current degrees of freedom: size of fitted TRPES - fitting parameters*len(TRPES)
+            number_of_points=self.global_TRPES_fitted.shape[0]*self.global_TRPES_fitted.shape[1]
+            #parameters that are fitted: sigma_1,sigma_2,sigma3,sigma_offset for each time_trace
+            #tau1,tau2,tau3,IRF globally
+            #IRF globally
+            #This means that for each energy slice I have to subtract 1 per exp (1 for mono-exp, 2 for bi-exp...) corresponding to the sigmas
+            #and then 1 each additional for the IRF/pos, taus
+            #note: if you fix a parameter, it doesn't reduce the degrees of freedoms! So basically
+            #I will always take stuff off for the sigmas, and then one for the taus/fwhm/pos
+            if self.comboBox_global_pick_model_unc.currentIndex()!=3:
+                parameters_fixed_original_fit=self.global_TRPES_fitted.shape[1]*(self.comboBox_global_pick_model_unc.currentIndex()+1)
+            else:
+                #assuming the autocorr function was chosen:
+                parameters_fixed_original_fit=self.global_TRPES_fitted.shape[1]
+            #if t0 floating
+            if self.checkBox_global_floating_t0_unc.isChecked()==True:
+                parameters_fixed_original_fit+=self.global_TRPES_fitted.shape[1]
+            #if there is an offset, there is another sigma, sigma_offset which is added as well
+            if self.radioButton_no_offset_unc.isChecked()==False:
+                parameters_fixed_original_fit+=self.global_TRPES_fitted.shape[1]
+            #now add one for each of the parameters that you can explore
+            parameters_fixed_original_fit+=self.comboBox_unc_variable_to_explore.count()
+            deg_freedom=number_of_points-parameters_fixed_original_fit
+            #current degrees of freedoms 2: number of eV points + fitting parameters
+            print('degrees of freedom',deg_freedom)
+            print('degrees of freedom one more value fixed',deg_freedom-1*self.global_TRPES_fitted.shape[1])
+            #get the f-value for the current degrees of freedom
+            #get the f-value for the current degrees of freedom
+            f_value=self.get_f_value(self.doubleSpinBox_value_of_confidence.value(),deg_freedom,deg_freedom-1*self.global_TRPES_fitted.shape[1])
+            print('f_value',f_value)
+            #the reporter value is the sqrt of the chi_square. Need to square it therefore!
+            chi_square_minimum=np.power(self.unc_starting_values[1].reporter[-1],2)
+            chi_square_thr=chi_square_minimum*f_value
+            value_to_be_explored=self.comboBox_unc_variable_to_explore.currentText()
+            optimal_value=self.unc_starting_values[0][self.unc_starting_values[3].index(value_to_be_explored)]
+            self.prepare_uncertainties_plot(value_to_be_explored,optimal_value,chi_square_thr,chi_square_minimum)
+            #problem is the line before! need to create bigger array!!!!
+            #start things
+            values_to_be_fitted=copy.deepcopy(self.unc_starting_values[0]).tolist()
+            values_to_be_fitted.remove(optimal_value)
+            values_to_be_fitted=np.array(values_to_be_fitted)
+            print('values now',values_to_be_fitted)
+            values_to_be_fitted_what=copy.deepcopy(self.unc_starting_values[3])
+            values_to_be_fitted_what.remove(value_to_be_explored)
+            print('values now what',values_to_be_fitted_what)
+            test_fit=copy.deepcopy(self.unc_starting_values[1])
+            self.unc_chi2.append(chi_square_minimum)
+            self.unc_var_value.append(optimal_value)
+            test_fit.reporter=[]
+            self.plotter_unc_plot()
+            #let's start with the positive direction (no precaution necessary here for excessive values I guess)
+            #for debugging purposes:hardstop after 15 iterations
+            it_max=15
+            i=0
+            optimal_value_pos=copy.deepcopy(optimal_value)
+            while i <it_max:
+                print("let's explore the postive direction",i)
+                if self.stop_flag==False:
+                    print('does this?')
+                    #always increase the optimal value *1.2. if it increases above threshold, then stop
+                    if optimal_value_pos*1.2-optimal_value_pos<0.1:
+                        optimal_value_pos+=1.
+                    else:
+                        optimal_value_pos*=1.2
+                    test_fit.ptot_function([optimal_value_pos],[value_to_be_explored])
+                    test_fit.reporter=[]
+                    plsq,cov,info,msg,ier=leastsq(test_fit.fit_function,values_to_be_fitted,
+                                                      args=(values_to_be_fitted_what,self.unc_starting_values[4],
+                                                            self.unc_starting_values[5],self.unc_starting_values[6],
+                                                            self.unc_starting_values[7],self.unc_starting_values[8],
+                                                            self.unc_starting_values[9],self.unc_starting_values[10],
+                                                            self.unc_starting_values[11]),
+                                                            full_output=True)
+                        #add the opt. chi to the list
+                    self.unc_chi2.append(np.power(test_fit.reporter[-1],2))
+                    self.unc_var_value.append(optimal_value_pos)
+                    if np.power(test_fit.reporter[-1],2)>chi_square_thr:
+                        break
+                    #update the graph
+                    #self.plot_explored_incertainties(optimal_value,chi_square_thr,chi_square_minimum)
+                    QApplication.processEvents()
+                else:
+                    break
+                i+=1
+            #let's explore in the negative direction
+            test_fit=copy.deepcopy(self.unc_starting_values[1])
+            test_fit.reporter=[]
+            optimal_value_neg=copy.deepcopy(optimal_value)
+            i=0
+            while i <it_max:
+                print('exploring negative direction',i)
+                if self.stop_flag==False:
+                    print("let's explore the negative direction")
+                    #always increase the optimal value *1.2. if it increases above threshold, then stop
+                    if optimal_value_neg-optimal_value_neg*0.8<0.01:
+                        optimal_value_neg-=1
+                    else:
+                        optimal_value_neg*=0.8
+                    if optimal_value_neg<=0.0010 and value_to_be_explored!='time_offset':
+                        print('did it break here?',optimal_value_neg)
+                        break
+                    test_fit.ptot_function([optimal_value_neg],[value_to_be_explored])
+                    test_fit.reporter=[]
+                    plsq,cov,info,msg,ier=leastsq(test_fit.fit_function,values_to_be_fitted,
+                                                      args=(values_to_be_fitted_what,self.unc_starting_values[4],
+                                                            self.unc_starting_values[5],self.unc_starting_values[6],
+                                                            self.unc_starting_values[7],self.unc_starting_values[8],
+                                                            self.unc_starting_values[9],self.unc_starting_values[10],
+                                                            self.unc_starting_values[11]),
+                                                            full_output=True)
+                        #add the opt. chi to the list
+                    self.unc_chi2.insert(0,np.power(test_fit.reporter[-1],2))
+                    self.unc_var_value.insert(0,optimal_value_neg)
+                    if np.power(test_fit.reporter[-1],2)>chi_square_thr:
+                        break
+                    #update the graph
+                    #self.plot_explored_incertainties(optimal_value,chi_square_thr,chi_square_minimum)
+                    QApplication.processEvents()
+                else:
+                    break
+                i+=1
+            
+            
+            
+    def plotter_unc_plot(self):
+        self.curve=self.viewer_explore_uncertainties.getPlotItem().plot()
+        self.timer = QtCore.QTimer(self)
+        self.timer.timeout.connect(self.updater)
+        self.timer.start(0)
+    
+    def updater2(self):
+        self.curve.setData(self.unc_var_value,self.unc_chi2,symbolPen='w')
+    
+    def prepare_uncertainties_plot(self,value_to_be_explored,optimal_value,chi_square_thr,chi_square_minimum):
+        self.viewer_explore_uncertainties.clear()
+        self.viewer_explore_uncertainties.setLabel('bottom',value_to_be_explored,units='ps')
+        self.viewer_explore_uncertainties.setLabel('left','chi**2',units='arb.u.')
+        self.viewer_explore_uncertainties.addItem(pg.InfiniteLine(pos=optimal_value))
+        self.viewer_explore_uncertainties.addItem(pg.InfiniteLine(pos=chi_square_thr,angle=0))
+        #draw a vertical line at the optimized value
+        
+
+    
+    @pyqtSlot()
+    def on_pushButton_unc_stop_exploring_clicked(self):
+        self.stop_flag=True
+        pass
+    
+    @pyqtSlot()
+    def on_pushButton_unc_save_graph_results_clicked(self):
+        """
+        function to save the shown graph as well as the starting values (basically the overview text file, right?)
+        """
+        filename=QFileDialog.getSaveFileName(self, 'Save File',self.dir)[0]+'.txt'
+        data=np.zeros((len(self.unc_var_value),2))
+        data[:,0]=self.unc_var_value
+        data[:,1]=self.unc_chi2
+        header='Hee we explored the uncertainties of a fit value, of '+str(self.viewer_explore_uncertainties.getLabel('bottom'))+'\n'
+        header+='The original fit parameters were:\n'
+        header+='Col1: value of the explored fit value, Col2: chi2'
+        header+=self.unc_starting_values[12]
+        np.savetxt(filename,data, header=header)
+        pass
+    def get_f_value(self,probability,n_para_1,n_para_2):
+        f=sps.f(n_para_2,n_para_1)
+        return f.ppf(probability)
+        
+
+    #explore the bidir uncert thing!
+    @pyqtSlot()
+    def on_pushButton_global_get_fitted_TRPES_bidir_clicked(self):
+              #load all the parameters etc if there was a successful fit beforehand
+        if self.unc_starting_values_bidir!=[]:
+            """
+            self.unc_starting_values_bidir=[plsq,self.global_fit_bidir_2d, 0,1
+                                      values_to_be_fitted,values_to_be_fitted_what, 2 3
+                                      function_pos,function_min, 4 5 
+                                      tfit,yfit, 6 7
+                                      self.checkBox_global_bidir_floating_t0.isChecked(), 8 
+                                      self.checkBox_global_bidir_pos_parallel.isChecked(), 9
+                                      self.checkBox_global_bidir_min_parallel.isChecked(), 10
+                                      sigma] 11
+            """
+            #select the model
+            if 'tau1_pos' in self.unc_starting_values_bidir[3]:
+                self.comboBox_global_pick_model_bidir_pos_unc.setCurrentIndex(0)
+            if 'tau1_min' in self.unc_starting_values_bidir[3]:
+                self.comboBox_global_pick_model_bidir_min_unc.setCurrentIndex(0)
+            if 'tau2_pos' in self.unc_starting_values_bidir[3]:
+                self.comboBox_global_pick_model_bidir_pos_unc.setCurrentIndex(1)
+            if 'tau2_min' in self.unc_starting_values_bidir[3]:
+                self.comboBox_global_pick_model_bidir_min_unc.setCurrentIndex(1)
+            if 'tau3_pos' in self.unc_starting_values_bidir[3]:
+                self.comboBox_global_pick_model_bidir_pos_unc.setCurrentIndex(2)
+            if 'tau3_min' in self.unc_starting_values_bidir[3]:
+                self.comboBox_global_pick_model_bidir_min_unc.setCurrentIndex(2)
+            self.checkBox_global_bidir_pos_parallel_unc.setChecked(self.unc_starting_values_bidir[9])
+            self.checkBox_global_bidir_min_parallel_unc.setChecked(self.unc_starting_values_bidir[10])
+            #set the taus to whatever was in the test_fit
+            self.doubleSpinBox_global_time_tau1_guess_bidir_pos_unc.setValue(self.unc_starting_values_bidir[1].tau1[0])
+            self.doubleSpinBox_global_time_tau2_guess_bidir_pos_unc.setValue(self.unc_starting_values_bidir[1].tau2[0])
+            self.doubleSpinBox_global_time_tau3_guess_bidir_pos_unc.setValue(self.unc_starting_values_bidir[1].tau3[0])
+            self.doubleSpinBox_global_time_tau1_guess_bidir_min_unc.setValue(self.unc_starting_values_bidir[1].tau1[1])
+            self.doubleSpinBox_global_time_tau2_guess_bidir_min_unc.setValue(self.unc_starting_values_bidir[1].tau2[1])
+            self.doubleSpinBox_global_time_tau3_guess_bidir_min_unc.setValue(self.unc_starting_values_bidir[1].tau3[1])
+            self.doubleSpinBox_guess_time_irf_guess_bidir_pos_unc.setValue(self.unc_starting_values_bidir[1].fwhm)
+            self.doubleSpinBox_global_time_pos_irf_guess_bidir_pos_unc.setValue(self.unc_starting_values_bidir[1].time_offset[0])
+            #radioboxes
+            self.comboBox_unc_variable_to_explore_bidir.clear()
+            spinboxes=[self.radioButton_tau1_fixed_bidir_pos_unc,self.radioButton_tau2_fixed_bidir_pos_unc,self.radioButton_tau3_fixed_bidir_pos_unc,
+                       self.radioButton_tau1_fixed_bidir_min_unc,self.radioButton_tau2_fixed_bidir_min_unc,self.radioButton_tau3_fixed_bidir_min_unc,
+                       self.radioButton_IRF_fixed_bidir_pos_unc, self.radioButton_pos_fixed_bidir_pos_unc]
+            for s in spinboxes:
+                s.setChecked(True)
+            for value in self.unc_starting_values_bidir[3]:
+                print('value to add',value)
+                if 'tau1' in value:
+                    print('tau1 found!')
+                    if 'pos' in value:
+                        self.radioButton_tau1_fixed_bidir_pos_unc.setChecked(False)
+                        self.comboBox_unc_variable_to_explore_bidir.addItem('tau1_pos')
+                    if 'min' in value:
+                        self.radioButton_tau1_fixed_bidir_min_unc.setChecked(False)
+                        self.comboBox_unc_variable_to_explore_bidir.addItem('tau1_min')                       
+                elif 'tau2' in value:
+                    print('tau2 found')
+                    if 'pos' in value:
+                        self.radioButton_tau2_fixed_bidir_pos_unc.setChecked(False)
+                        self.comboBox_unc_variable_to_explore_bidir.addItem('tau2_pos')
+                    if 'min' in value:
+                        self.radioButton_tau2_fixed_bidir_min_unc.setChecked(False)
+                        self.comboBox_unc_variable_to_explore_bidir.addItem('tau2_min')
+                elif 'tau3' in value:
+                    print('tau3 found!')
+                    if 'pos' in value:
+                        self.radioButton_tau3_fixed_bidir_pos_unc.setChecked(False)
+                        self.comboBox_unc_variable_to_explore_bidir.addItem('tau3_pos')
+                    if 'min' in value:
+                        self.radioButton_tau3_fixed_bidir_min_unc.setChecked(False)
+                        self.comboBox_unc_variable_to_explore_bidir.addItem('tau3_min')
+                elif value=='fwhm':
+                    self.radioButton_IRF_fixed_bidir_pos_unc.setChecked(False)
+                    self.comboBox_unc_variable_to_explore_bidir.addItem('fwhm')
+                elif value=='time_offset':
+                    self.radioButton_pos_fixed_bidir_pos_unc.setChecked(False)
+                    self.comboBox_unc_variable_to_explore_bidir.addItem('time_offset')
+            #checking whether t0 was variable
+            if self.checkBox_global_bidir_floating_t0.isChecked()==True:
+                self.checkBox_global_floating_t0_unc_bidir.setChecked(True)
+                self.radioButton_pos_fixed_bidir_pos_unc.setChecked(False)                
+            #getting the offset etc
+            if self.radioButton_no_offset_bidir_pos_3.isChecked()==True:
+                self.radioButton_no_offset_bidir_pos_unc.setChecked(True)
+            elif self.radioButton_time_final_offset_bidir_pos_3.isChecked()==True:
+                self.radioButton_time_final_offset_bidir_pos_unc.setChecked(True)
+            else:
+                self.radioButton_time_final_offset_bidir_pos_unc.setChecked(True)
+            if self.radioButton_no_offset_bidir_min_2.isChecked()==True:
+                self.radioButton_no_offset_bidir_min_unc.setChecked(True)
+            elif self.radioButton_time_final_offset_bidir_min_2.isChecked()==True:
+                self.radioButton_time_final_offset_bidir_min_unc.setChecked(True)
+            else:
+                self.radioButton_time_final_offset_bidir_min_unc.setChecked(True)
+            self.loaded_succ_for_unc_bidir=True
+            #plotting the TRPES
+            self.comboBox_unc_global_fit_or_residual_bidir.setCurrentIndex(1)
+            self.comboBox_unc_global_fit_or_residual_bidir.setCurrentIndex(0)
+
+    
+    @pyqtSlot('int')
+    def on_comboBox_unc_global_fit_or_residual_bidir_currentIndexChanged(self,value):
+        print(value)
+        if self.loaded_succ_for_unc_bidir==True:
+            print("was here")
+            if value==0:  
+                print(value)
+                self.plot_TRPES(self.viewer_global_unc_TRPES_bidir,self.global_TRPES_bidir_fitted,self.global_time_bidir_fitted,self.global_eV_bidir)
+            elif value==1: 
+                print(value)
+                self.plot_TRPES(self.viewer_global_unc_TRPES_bidir,self.global_TRPES_bidir,self.global_time_bidir_fitted,self.global_eV_bidir)
+            elif value==2:
+                print(value)
+                self.plot_TRPES(self.viewer_global_unc_TRPES_bidir,self.global_TRPES_residual_bidir,self.global_time_bidir_fitted,self.global_eV_bidir)
+
+    
+    
+    @pyqtSlot()
+    def on_pushButton_unc_start_exploring_bidir_clicked(self):
+        self.stop_flag_bidir=False
+        if self.loaded_succ_for_unc_bidir==True:
+        #now do the stuff in a loop as long as the user hasen't clicked stop!
+            """
+            self.unc_starting_values_bidir=[plsq,self.global_fit_bidir_2d, 0,1
+                                      values_to_be_fitted,values_to_be_fitted_what, 2 3
+                                      function_pos,function_min, 4 5 
+                                      tfit,yfit, 6 7
+                                      self.checkBox_global_bidir_floating_t0.isChecked(), 8 
+                                      self.checkBox_global_bidir_pos_parallel.isChecked(), 9
+                                      self.checkBox_global_bidir_min_parallel.isChecked(), 10
+                                      sigma] 11
+            """ 
+            self.unc_chi2_bidir=[]
+            self.unc_var_value_bidir=[]
+            #current degrees of freedom: size of fitted TRPES - fitting parameters*len(TRPES)
+            number_of_points=self.global_TRPES_bidir_fitted.shape[0]*self.global_TRPES_bidir_fitted.shape[1]
+            #parameters that are fitted: sigma_1,sigma_2,sigma3,sigma_offset for each time_trace
+            #tau1,tau2,tau3,IRF globally
+            #IRF globally
+            #This means that for each energy slice I have to subtract 1 per exp (1 for mono-exp, 2 for bi-exp...) corresponding to the sigmas
+            #and then 1 each additional for the IRF/pos, taus
+            #note: if you fix a parameter, it doesn't reduce the degrees of freedoms! So basically
+            #I will always take stuff off for the sigmas, and then one for the taus/fwhm/pos
+            #add the parameters for the pos
+            parameters_fixed_original_fit_bidir=self.global_TRPES_bidir_fitted.shape[1]*(self.comboBox_global_pick_model_bidir_pos_unc.currentIndex()+1)
+            #add the paramenters for the neg
+            parameters_fixed_original_fit_bidir+=self.global_TRPES_bidir_fitted.shape[1]*(self.comboBox_global_pick_model_bidir_min_unc.currentIndex()+1)
+            #if t0 floating
+            if self.checkBox_global_floating_t0_unc_bidir.isChecked()==True:
+                parameters_fixed_original_fit_bidir+=self.global_TRPES_bidir_fitted.shape[1]
+            #if there is an offset, there is another sigma, sigma_offset which is added as well
+            if self.radioButton_no_offset_bidir_pos_unc.isChecked()==False:
+                parameters_fixed_original_fit_bidir+=self.global_TRPES_bidir_fitted.shape[1]
+            if self.radioButton_no_offset_bidir_min_unc.isChecked()==False:
+                parameters_fixed_original_fit_bidir+=self.global_TRPES_bidir_fitted.shape[1]
+            #now add one for each of the parameters that you can explore
+            parameters_fixed_original_fit_bidir+=self.comboBox_unc_variable_to_explore_bidir.count()
+            deg_freedom=number_of_points-parameters_fixed_original_fit_bidir
+            #current degrees of freedoms 2: number of eV points + fitting parameters
+            print('degrees of freedom',deg_freedom)
+            print('degrees of freedom one more value fixed',deg_freedom-1*self.global_TRPES_bidir_fitted.shape[1])
+            #get the f-value for the current degrees of freedom
+            f_value=self.get_f_value(self.doubleSpinBox_value_of_confidence_bidir.value(),deg_freedom,deg_freedom-1*self.global_TRPES_bidir_fitted.shape[1])
+            print('f_value',f_value)
+            #the reporter value is the sqrt of the chi_square. Need to square it therefore!
+            chi_square_minimum=np.power(self.unc_starting_values_bidir[1].reporter[-1],2)
+            chi_square_thr=chi_square_minimum*f_value
+            #let's first search just in the area of +-20%
+            value_to_be_explored=self.comboBox_unc_variable_to_explore_bidir.currentText()
+            optimal_value=self.unc_starting_values_bidir[0][self.unc_starting_values_bidir[3].index(value_to_be_explored)]
+            self.prepare_uncertainties_plot_bidir(value_to_be_explored,optimal_value,chi_square_thr,chi_square_minimum)
+            #let's go for 5 points in each direction
+            values_to_list=np.linspace(self.doubleSpinBox_unc_min_bidir.value(),self.doubleSpinBox_unc_max_bidir.value(),self.spinBox_unc_num_points_bidir.value())
+            #problem is the line before! need to create bigger array!!!!
+            #start things
+            values_to_be_fitted=copy.deepcopy(self.unc_starting_values_bidir[0]).tolist()
+            values_to_be_fitted.remove(optimal_value)
+            values_to_be_fitted=np.array(values_to_be_fitted)
+            print('values now',values_to_be_fitted)
+            values_to_be_fitted_what=copy.deepcopy(self.unc_starting_values_bidir[3])
+            values_to_be_fitted_what.remove(value_to_be_explored)
+            print('values now what',values_to_be_fitted_what)
+            test_fit=copy.deepcopy(self.unc_starting_values_bidir[1])
+            print('this one should have all the starting stuff in there!')
+            print('reporter',test_fit.reporter)
+            print("let's see what is in the starting stuff", self.unc_starting_values_bidir[4],self.unc_starting_values_bidir[5])
+            test_fit.reporter=[]
+            self.plotter_unc_plot_bidir()
+            #getting the fitting functions again since I copied the fit object!!
+            fit_func_interm=[]
+            index_model_pos=self.comboBox_global_pick_model_bidir_pos_unc.currentIndex()
+            index_model_min=self.comboBox_global_pick_model_bidir_min_unc.currentIndex()
+            for n,model in enumerate([index_model_pos,index_model_min]):
+                if [self.checkBox_global_bidir_pos_parallel_unc.isChecked(),self.checkBox_global_bidir_min_parallel_unc.isChecked()][n]==False:
+                    if [self.radioButton_no_offset_bidir_pos_unc.isChecked(),self.radioButton_no_offset_bidir_min_unc.isChecked()][n]==True:
+                        possible_fitfunc_interm=[test_fit.interm_fit.mono_exp_decay,
+                                                     test_fit.interm_fit.bi_exp_decay,
+                                                     test_fit.interm_fit.tri_exp_decay]
+                        fit_func_interm.append(possible_fitfunc_interm[model])
+                        
+                    elif [self.radioButton_time_final_offset_bidir_pos_unc.isChecked(),self.radioButton_time_final_offset_bidir_min_unc.isChecked()][n]==True:
+                        possible_fitfunc_interm=[test_fit.interm_fit.mono_exp_decay_with_offset_final,
+                                          test_fit.interm_fit.bi_exp_decay_with_offset_final,
+                                          test_fit.interm_fit.tri_exp_decay_with_offset_final]
+                        fit_func_interm.append(possible_fitfunc_interm[model])
+                        
+                    elif [self.radioButton_time_offset_bidir_pos_unc.isChecked(),self.radioButton_time_offset_bidir_min_unc.isChecked()][n]==True:
+                        possible_fitfunc_interm=[test_fit.interm_fit.mono_exp_decay_with_offset,
+                                          test_fit.interm_fit.bi_exp_decay_with_offset,
+                                          test_fit.interm_fit.tri_exp_decay_with_offset]
+                        fit_func_interm.append(possible_fitfunc_interm[model])
+                else:
+                    if [self.radioButton_no_offset_bidir_pos_unc.isChecked(),self.radioButton_no_offset_bidir_min_unc.isChecked()][n]==True:
+                        possible_fitfunc_interm=[test_fit.interm_fit.mono_exp_parallel,
+                                                     test_fit.interm_fit.bi_exp_parallel,
+                                                     test_fit.interm_fit.tri_exp_parallel]
+                        fit_func_interm.append(possible_fitfunc_interm[model])
+                        
+                    elif [self.radioButton_no_offset_bidir_pos_unc.isChecked(),self.radioButton_no_offset_bidir_min_unc.isChecked()][n]==False:
+                        possible_fitfunc_interm=[test_fit.interm_fit.mono_exp_parallel_offset,
+                                          test_fit.interm_fit.bi_exp_parallel_offset,
+                                          test_fit.interm_fit.tri_exp_parallel_offset]
+                        fit_func_interm.append(possible_fitfunc_interm[model])
+            function_pos=fit_func_interm[0]
+            function_min=fit_func_interm[1] 
+            for value in values_to_list:
+                print('next value',value)
+                if self.stop_flag_bidir==False:
+                    #set the starting value
+                    test_fit.ptot_function([value],[value_to_be_explored])
+                    test_fit.reporter=[]
+                    #fit it               
+                    plsq,cov,info,msg,ier=leastsq(test_fit.fit_function,values_to_be_fitted,
+                                                  args=(values_to_be_fitted_what,function_pos,
+                                                        function_min,self.unc_starting_values_bidir[6],
+                                                        self.unc_starting_values_bidir[7],self.unc_starting_values_bidir[8],
+                                                        self.unc_starting_values_bidir[9],self.unc_starting_values_bidir[10],
+                                                        self.unc_starting_values_bidir[11]),
+                                                        full_output=True,maxfev=self.spinBox_unc_maxFitIterator_bidr.value())
+                    #add the opt. chi to the list
+                    self.unc_chi2_bidir.append(np.power(test_fit.reporter[-1],2))
+                    print('reporter', test_fit.reporter)
+                    self.unc_var_value_bidir.append(value)
+                    #update the graph
+                    #self.plot_explored_incertainties(optimal_value,chi_square_thr,chi_square_minimum)
+                    QApplication.processEvents()
+                else:
+                    break
+                print('test')
+                
+                
+    @pyqtSlot()
+    def on_pushButton_unc_find_limits_bidir_clicked(self):             
+        self.stop_flag_bidir=False
+        if self.loaded_succ_for_unc_bidir==True:
+            #now do the stuff in a loop as long as the user hasen't clicked stop!
+            """
+            self.unc_starting_values_bidir=[plsq,self.global_fit_bidir_2d, 0,1
+                                      values_to_be_fitted,values_to_be_fitted_what, 2 3
+                                      function_pos,function_min, 4 5 
+                                      tfit,yfit, 6 7
+                                      self.checkBox_global_bidir_floating_t0.isChecked(), 8 
+                                      self.checkBox_global_bidir_pos_parallel.isChecked(), 9
+                                      self.checkBox_global_bidir_min_parallel.isChecked(), 10
+                                      sigma] 11
+            """
+            self.unc_chi2_bidir=[]
+            self.unc_var_value_bidir=[]
+            #current degrees of freedom: size of fitted TRPES - fitting parameters*len(TRPES)
+            number_of_points=self.global_TRPES_bidir_fitted.shape[0]*self.global_TRPES_bidir_fitted.shape[1]
+            #parameters that are fitted: sigma_1,sigma_2,sigma3,sigma_offset for each time_trace
+            #tau1,tau2,tau3,IRF globally
+            #IRF globally
+            #This means that for each energy slice I have to subtract 1 per exp (1 for mono-exp, 2 for bi-exp...) corresponding to the sigmas
+            #and then 1 each additional for the IRF/pos, taus
+            #note: if you fix a parameter, it doesn't reduce the degrees of freedoms! So basically
+            #I will always take stuff off for the sigmas, and then one for the taus/fwhm/pos
+            #add the parameters for the pos
+            parameters_fixed_original_fit_bidir=self.global_TRPES_bidir_fitted.shape[1]*(self.comboBox_global_pick_model_bidir_pos_unc.currentIndex()+1)
+            #add the paramenters for the neg
+            parameters_fixed_original_fit_bidir+=self.global_TRPES_bidir_fitted.shape[1]*(self.comboBox_global_pick_model_bidir_min_unc.currentIndex()+1)
+            #if t0 floating
+            if self.checkBox_global_floating_t0_unc_bidir.isChecked()==True:
+                parameters_fixed_original_fit_bidir+=self.global_TRPES_bidir_fitted.shape[1]
+            #if there is an offset, there is another sigma, sigma_offset which is added as well
+            if self.radioButton_no_offset_bidir_pos_unc.isChecked()==False:
+                parameters_fixed_original_fit_bidir+=self.global_TRPES_bidir_fitted.shape[1]
+            if self.radioButton_no_offset_bidir_min_unc.isChecked()==False:
+                parameters_fixed_original_fit_bidir+=self.global_TRPES_bidir_fitted.shape[1]
+            #now add one for each of the parameters that you can explore
+            parameters_fixed_original_fit_bidir+=self.comboBox_unc_variable_to_explore_bidir.count()
+            deg_freedom=number_of_points-parameters_fixed_original_fit_bidir
+            #current degrees of freedoms 2: number of eV points + fitting parameters
+            print('degrees of freedom',deg_freedom)
+            print('degrees of freedom one more value fixed',deg_freedom-1*self.global_TRPES_bidir_fitted.shape[1])
+            #get the f-value for the current degrees of freedom
+            f_value=self.get_f_value(self.doubleSpinBox_value_of_confidence_bidir.value(),deg_freedom,deg_freedom-1*self.global_TRPES_bidir_fitted.shape[1])
+            print('f_value',f_value)
+            #the reporter value is the sqrt of the chi_square. Need to square it therefore!
+            chi_square_minimum=np.power(self.unc_starting_values_bidir[1].reporter[-1],2)
+            chi_square_thr=chi_square_minimum*f_value
+            #let's first search just in the area of +-20%
+            value_to_be_explored=self.comboBox_unc_variable_to_explore_bidir.currentText()
+            optimal_value=self.unc_starting_values_bidir[0][self.unc_starting_values_bidir[3].index(value_to_be_explored)]
+            self.prepare_uncertainties_plot_bidir(value_to_be_explored,optimal_value,chi_square_thr,chi_square_minimum)
+            #let's go for 5 points in each direction
+            values_to_list=np.linspace(self.doubleSpinBox_unc_min_bidir.value(),self.doubleSpinBox_unc_max_bidir.value(),self.spinBox_unc_num_points_bidir.value())
+            #problem is the line before! need to create bigger array!!!!
+            #start things
+            values_to_be_fitted=copy.deepcopy(self.unc_starting_values_bidir[0]).tolist()
+            values_to_be_fitted.remove(optimal_value)
+            values_to_be_fitted=np.array(values_to_be_fitted)
+            print('values now',values_to_be_fitted)
+            values_to_be_fitted_what=copy.deepcopy(self.unc_starting_values_bidir[3])
+            values_to_be_fitted_what.remove(value_to_be_explored)
+            print('values now what',values_to_be_fitted_what)
+            test_fit=copy.deepcopy(self.unc_starting_values_bidir[1])
+            test_fit.reporter=[]
+            self.plotter_unc_plot_bidir()
+            #getting the fitting functions again since I copied the fit object!!
+            fit_func_interm=[]
+            index_model_pos=self.comboBox_global_pick_model_bidir_pos_unc.currentIndex()
+            index_model_min=self.comboBox_global_pick_model_bidir_min_unc.currentIndex()
+            for n,model in enumerate([index_model_pos,index_model_min]):
+                if [self.checkBox_global_bidir_pos_parallel_unc.isChecked(),self.checkBox_global_bidir_min_parallel_unc.isChecked()][n]==False:
+                    if [self.radioButton_no_offset_bidir_pos_unc.isChecked(),self.radioButton_no_offset_bidir_min_unc.isChecked()][n]==True:
+                        possible_fitfunc_interm=[test_fit.interm_fit.mono_exp_decay,
+                                                     test_fit.interm_fit.bi_exp_decay,
+                                                     test_fit.interm_fit.tri_exp_decay]
+                        fit_func_interm.append(possible_fitfunc_interm[model])
+                        
+                    elif [self.radioButton_time_final_offset_bidir_pos_unc.isChecked(),self.radioButton_time_final_offset_bidir_min_unc.isChecked()][n]==True:
+                        possible_fitfunc_interm=[test_fit.interm_fit.mono_exp_decay_with_offset_final,
+                                          test_fit.interm_fit.bi_exp_decay_with_offset_final,
+                                          test_fit.interm_fit.tri_exp_decay_with_offset_final]
+                        fit_func_interm.append(possible_fitfunc_interm[model])
+                        
+                    elif [self.radioButton_time_offset_bidir_pos_unc.isChecked(),self.radioButton_time_offset_bidir_min_unc.isChecked()][n]==True:
+                        possible_fitfunc_interm=[test_fit.interm_fit.mono_exp_decay_with_offset,
+                                          test_fit.interm_fit.bi_exp_decay_with_offset,
+                                          test_fit.interm_fit.tri_exp_decay_with_offset]
+                        fit_func_interm.append(possible_fitfunc_interm[model])
+                else:
+                    if [self.radioButton_no_offset_bidir_pos_unc.isChecked(),self.radioButton_no_offset_bidir_min_unc.isChecked()][n]==True:
+                        possible_fitfunc_interm=[test_fit.interm_fit.mono_exp_parallel,
+                                                     test_fit.interm_fit.bi_exp_parallel,
+                                                     test_fit.interm_fit.tri_exp_parallel]
+                        fit_func_interm.append(possible_fitfunc_interm[model])
+                        
+                    elif [self.radioButton_no_offset_bidir_pos_unc.isChecked(),self.radioButton_no_offset_bidir_min_unc.isChecked()][n]==False:
+                        possible_fitfunc_interm=[test_fit.interm_fit.mono_exp_parallel_offset,
+                                          test_fit.interm_fit.bi_exp_parallel_offset,
+                                          test_fit.interm_fit.tri_exp_parallel_offset]
+                        fit_func_interm.append(possible_fitfunc_interm[model])
+            function_pos=fit_func_interm[0]
+            function_min=fit_func_interm[1] 
+            it_max=15
+            i=0
+            optimal_value_pos=copy.deepcopy(optimal_value)
+            while i <it_max:
+                print("let's explore the postive direction",i)
+                if self.stop_flag_bidir==False:
+                    print('does this?')
+                    #always increase the optimal value *1.2. if it increases above threshold, then stop
+                    if optimal_value_pos*1.2-optimal_value_pos<0.1:
+                        optimal_value_pos+=1.
+                    else:
+                        optimal_value_pos*=1.2
+                    test_fit.ptot_function([optimal_value_pos],[value_to_be_explored])
+                    test_fit.reporter=[]
+                    plsq,cov,info,msg,ier=leastsq(test_fit.fit_function,values_to_be_fitted,
+                                                  args=(values_to_be_fitted_what,function_pos,
+                                                        function_min,self.unc_starting_values_bidir[6],
+                                                        self.unc_starting_values_bidir[7],self.unc_starting_values_bidir[8],
+                                                        self.unc_starting_values_bidir[9],self.unc_starting_values_bidir[10],
+                                                        self.unc_starting_values_bidir[11]),
+                                                        full_output=True,maxfev=self.spinBox_unc_maxFitIterator_bidr.value())
+                        #add the opt. chi to the list
+                    self.unc_chi2_bidir.append(np.power(test_fit.reporter[-1],2))
+                    self.unc_var_value_bidir.append(optimal_value_pos)
+                    if np.power(test_fit.reporter[-1],2)>chi_square_thr:
+                        break
+                    #update the graph
+                    #self.plot_explored_incertainties(optimal_value,chi_square_thr,chi_square_minimum)
+                    QApplication.processEvents()
+                else:
+                    break
+                i+=1
+            #let's explore in the negative direction
+            test_fit.reporter=[]
+            optimal_value_neg=copy.deepcopy(optimal_value)
+            i=0
+            while i <it_max:
+                print('exploring negative direction',i)
+                if self.stop_flag_bidir==False:
+                    print("let's explore the negative direction")
+                    #always increase the optimal value *1.2. if it increases above threshold, then stop
+                    if optimal_value_neg-optimal_value_neg*0.8<0.01:
+                        optimal_value_neg-=1
+                    else:
+                        optimal_value_neg*=0.8
+                    if optimal_value_neg<=0.0010 and value_to_be_explored!='time_offset':
+                        print('did it break here?',optimal_value_neg)
+                        break
+                    test_fit.ptot_function([optimal_value_neg],[value_to_be_explored])
+                    test_fit.reporter=[]
+                    plsq,cov,info,msg,ier=leastsq(test_fit.fit_function,values_to_be_fitted,
+                                                  args=(values_to_be_fitted_what,function_pos,
+                                                        function_min,self.unc_starting_values_bidir[6],
+                                                        self.unc_starting_values_bidir[7],self.unc_starting_values_bidir[8],
+                                                        self.unc_starting_values_bidir[9],self.unc_starting_values_bidir[10],
+                                                        self.unc_starting_values_bidir[11]),
+                                                        full_output=True,maxfev=self.spinBox_unc_maxFitIterator_bidr.value())
+                        #add the opt. chi to the list
+                    self.unc_chi2_bidir.insert(0,np.power(test_fit.reporter[-1],2))
+                    self.unc_var_value_bidir.insert(0,optimal_value_neg)
+                    if np.power(test_fit.reporter[-1],2)>chi_square_thr:
+                        break
+                    #update the graph
+                    #self.plot_explored_incertainties(optimal_value,chi_square_thr,chi_square_minimum)
+                    QApplication.processEvents()
+                else:
+                    break
+                i+=1
+                print('test')
+    
+
+            
+            
+    def plotter_unc_plot_bidir(self):
+        self.curve_bidir=self.viewer_explore_uncertainties_bidir.getPlotItem().plot()
+        self.timer_bidir = QtCore.QTimer(self)
+        self.timer_bidir.timeout.connect(self.updater_bidir)
+        self.timer_bidir.start(0)
+
+    
+    def updater_bidir(self):
+        self.curve_bidir.setData(self.unc_var_value_bidir,self.unc_chi2_bidir,symbolPen='w')
+
+    
+    def prepare_uncertainties_plot_bidir(self,value_to_be_explored,optimal_value,chi_square_thr,chi_square_minimum):
+        self.viewer_explore_uncertainties_bidir.clear()
+        self.viewer_explore_uncertainties_bidir.setLabel('bottom',value_to_be_explored,units='ps')
+        self.viewer_explore_uncertainties_bidir.setLabel('left','chi**2',units='arb.u.')
+        self.viewer_explore_uncertainties_bidir.addItem(pg.InfiniteLine(pos=optimal_value))
+        self.viewer_explore_uncertainties_bidir.addItem(pg.InfiniteLine(pos=chi_square_thr,angle=0))
+        
+
+    
+    @pyqtSlot()
+    def on_pushButton_unc_stop_exploring_bidir_clicked(self):
+        self.stop_flag_bidir=True
+        pass
+    
+    @pyqtSlot()
+    def on_pushButton_unc_save_graph_results_bidir_clicked(self):
+        """
+        function to save the shown graph as well as the starting values (basically the overview text file, right?)
+        """
+        filename=QFileDialog.getSaveFileName(self, 'Save File',self.dir)[0]+'.txt'
+        data=np.zeros((len(self.unc_var_value_bidir),2))
+        data[:,0]=self.unc_var_value_bidir
+        data[:,1]=self.unc_chi2_bidir
+        header='Hee we explored the uncertainties of a fit value, of '+str(self.viewer_explore_uncertainties_bidir.getLabel('bottom'))+'\n'
+        header+='The original fit parameters were:\n'
+        header+='Col1: value of the explored fit value, Col2: chi2'
+        header+=self.unc_starting_values_bidir[12]
+        np.savetxt(filename,data, header=header)
+        pass
+
+
+
 
 """
 if __name__ == "__main__":

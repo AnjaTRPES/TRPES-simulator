@@ -239,6 +239,7 @@ class fits_2D_2nd(object):
         self.interm_fit.fwhm=self.fwhm
 
         #for the uncertainties of the DAS
+        print('--------------------')
         self.cov_DASs=[]
         self.plsq_DASs=[]
         print(len(self.reporter))
@@ -253,6 +254,10 @@ class fits_2D_2nd(object):
             Ptot_interm,Ptot_interm_what=self.get_Ptot_interm(interm_fct_what,n,floating_t0,parallel)
             plsq,cov,info,msg,ier=leastsq(self.interm_fit.fit_function,Ptot_interm,
                               args=(Ptot_interm_what,interm_fct,[t],[y],floating_t0,sigmas[n]),full_output=True)
+            #print(msg)
+            self.cov_DASs.append(cov)
+            self.plsq_DASs.append(plsq)
+            #print(plsq)
             self.reset_sigmas(plsq,interm_fct_what,n,floating_t0,parallel)
             self.cov_DASs.append(cov)
             self.plsq_DASs.append(plsq)
@@ -485,9 +490,9 @@ class fits_2D_2nd(object):
             for i in range(len(self.plsq_DASs[n])):
                 plsqs.append(self.plsq_DASs[i])
                 if type(self.cov_DASs[n])==type(None):
-                    Delta=float('nan')
+                    Delta=float(-0.00002)
                 elif self.cov_DASs[n].any()==None:
-                    Delta=float('nan')
+                    Delta=float(-0.00001)
                 else:
                     Delta=(np.sqrt(self.cov_DASs[n].diagonal())*res)[i]
                 Deltas.append(Delta)

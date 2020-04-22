@@ -167,6 +167,7 @@ class fits_bidir_2d(object):
                 Maxcalls=10000
             y=Yfit[k]
             Ptot_interm,Ptot_interm_what=self.get_Ptot_interm(function_pos,function_min,k,floating_t0,parallel_pos,parallel_min)
+            #print('what are the intermediates to be fitted', Ptot_interm, Ptot_interm_what)
             #plsq,cov=leastsq(self.interm_fit.fit_function,Ptot_interm,
             #     args=(Ptot_interm_what,function_pos,function_min,t,y,floating_t0),full_output=False,maxfev=Maxcalls)
             #print('sigmas[k]',sigmas[k])
@@ -189,7 +190,7 @@ class fits_bidir_2d(object):
             for n in range(1,len(return_roots)):
                 start=np.concatenate((start,return_roots[n]))
             self.reporter.append(np.sum(start))
-            print(len(self.reporter))
+            print(self.reporter[-1])
             return start
     def get_Ptot_interm(self, function_pos,function_min,k,floating_t0,parallel_pos,parallel_min):
         which=['_pos','_min']
