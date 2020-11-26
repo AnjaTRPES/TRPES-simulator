@@ -4101,7 +4101,7 @@ class TRPES_simulator(QMainWindow,Ui_TRPES_simulator):
         self.timer.timeout.connect(self.updater)
         self.timer.start(0)
     
-    def updater2(self):
+    def updater(self):
         self.curve.setData(self.unc_var_value,self.unc_chi2,symbolPen='w')
     
     def prepare_uncertainties_plot(self,value_to_be_explored,optimal_value,chi_square_thr,chi_square_minimum):
